@@ -13,7 +13,8 @@ export default function HomePage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setError(""); setResult(null);
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const budget = String(form.get("budget") || "").trim();
     try {
       const response = await fetch("/api/demands", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
@@ -22,7 +23,7 @@ export default function HomePage() {
       }) });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Une erreur est survenue.");
-      setResult(payload as Result); event.currentTarget.reset();
+      setResult(payload as Result); formElement.reset();
     } catch (e) { setError(e instanceof Error ? e.message : "Une erreur est survenue."); }
     finally { setBusy(false); }
   }
