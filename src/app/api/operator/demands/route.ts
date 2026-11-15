@@ -19,7 +19,7 @@ async function getRankedCandidates(demand: {
   const sellers = await prisma.seller.findMany({
     where: { isActive: true, city: { equals: demand.city, mode: "insensitive" } },
     select: {
-      id: true, specialties: true,
+      id: true, businessName: true, specialties: true,
       products: { where: { isAvailable: true }, select: { name: true, category: true, unit: true, priceCents: true, isAvailable: true } },
     },
   });
@@ -29,8 +29,12 @@ async function getRankedCandidates(demand: {
     requestedItems,
   };
   const matches = rankSellerMatches(sellers, constraints);
+  const sellerNames = Object.fromEntries(sellers.map(seller => [seller.id, seller.businessName]));
   const basketPlans = requestedItems.length
-    ? planMultiSellerBaskets(sellers, requestedItems, 3, 5)
+    ? planMultiSellerBaskets(sellers, requestedItems, 3, 5).map(plan => ({
+        ...plan,
+        sellerNames: plan.sellerIds.map(id => sellerNames[id] || id),
+      }))
     : [];
   return { categories, requestedItems, matches, basketPlans };
 }
