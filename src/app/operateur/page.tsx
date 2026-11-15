@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import SellerReviewActions from "./seller-review-actions";
 import DemandDistributionPanel from "./demand-distribution-panel";
 import OperatorPaymentsDashboard from "./operator-payments-dashboard";
+import NotificationCenter from "@/components/notification-center";
 
 export default async function OperatorPage() {
   const user = await getCurrentUser();
@@ -42,7 +43,7 @@ export default async function OperatorPage() {
   return <main className="shell" style={{ paddingTop: 42, paddingBottom: 80 }}>
     <header className="topbar" style={{ padding: "0 0 24px" }}>
       <Link className="brand" href="/"><span className="brand-mark"><Store size={19}/></span>FOOD SIGNAL</Link>
-      <span className="pill">Console opérateur</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}><NotificationCenter/><span className="pill">Console opérateur</span></div>
     </header>
     <div className="eyebrow">Administration du réseau</div>
     <h1 style={{ fontSize: "clamp(2rem,5vw,3rem)" }}>Validation des commerçants</h1>
