@@ -41,6 +41,13 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -67,6 +74,10 @@ model Seller {
   latitude    Float?
   longitude   Float?
   isActive    Boolean  @default(false)
+  stripeAccountId String? @unique
+  stripeChargesEnabled Boolean @default(false)
+  stripePayoutsEnabled Boolean @default(false)
+  stripeTransfersEnabled Boolean @default(false)
   products    Product[]
   offers      Offer[]
   demandRecipients DemandRecipient[]
@@ -140,6 +151,10 @@ model Order {
   fulfillmentMode FulfillmentMode
   deliveryAddress String?
   totalCents      Int
+  paymentStatus   PaymentStatus @default(PENDING)
+  stripeCheckoutSessionId String? @unique
+  stripePaymentIntentId String? @unique
+  paidAt          DateTime?
   confirmedAt     DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 }
