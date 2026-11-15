@@ -77,7 +77,7 @@ Ouvrir `http://localhost:3000`.
 - Les routes d'administration exigent le rôle OPERATOR côté serveur.
 - Classement déterministe des vendeurs actifs de la même ville : adéquation des spécialités (50 points), présence de produits du catalogue (35 points) et indice budgétaire (15 points).
 - Diffusion opérateur aux 10 meilleurs candidats dépassant le seuil de 25/100 ; les motifs et scores sont visibles avant l'envoi.
-- Le budget est un signal indicatif fondé sur le prix d'au moins un produit pertinent, pas une estimation du panier complet. Le score ne prouve ni disponibilité réelle, ni capacité de livraison, ni prix final.
+- Le coût du panier vendeur est estimé à partir des lignes structurées, des quantités, des unités compatibles et des prix catalogue disponibles. Un panier incomplet n'est pas présenté comme chiffré. Les frais de préparation et de livraison ne sont pas inclus. Le score ne prouve ni disponibilité réelle à la date demandée, ni capacité logistique, ni prix final.
 - Notifications opérateur pour les remboursements et les litiges Stripe.
 - Les vendeurs ne reçoivent que le résumé anonymisé, la ville, le budget et les modalités, sans les coordonnées client ni la description brute.
 
@@ -152,3 +152,12 @@ Ce lot fournit des notifications dans l’application uniquement. Aucun e-mail, 
 Le moteur actuel reste déterministe et sans appel à un fournisseur IA. Il détecte des catégories à partir du résumé anonymisé, élimine les vendeurs inactifs ou situés dans une autre ville, puis classe les candidats selon trois signaux vérifiables : spécialités déclarées (50 points), produits disponibles du catalogue (35 points) et indice budgétaire indicatif (15 points). Seuls les dix meilleurs candidats ayant au moins 25/100 sont proposés à la diffusion opérateur.
 
 La console affiche le nombre de candidats, les meilleurs scores et les raisons principales. La diffusion reste une action explicite de l'opérateur. Les coordonnées personnelles et la description originale ne sont jamais utilisées par ce moteur ni transmises aux vendeurs. Les contraintes de quantité, la disponibilité à une date précise, la zone de livraison, le rayon géographique, la conformité détaillée des lignes et l'optimisation multi-vendeurs ne sont pas encore modélisés par ce score.
+
+
+## Estimation de panier et combinaison multi-vendeurs
+
+Lorsque l'analyse structurée d'une demande fournit des lignes `items` avec un nom et une quantité (unité et catégorie facultatives), le moteur calcule le sous-total catalogue complet d'un vendeur. Une ligne sans produit disponible correspondant, ou avec une unité incompatible, rend l'estimation incomplète : aucun bonus budgétaire n'est attribué.
+
+Le moteur propose également jusqu'à cinq combinaisons couvrant toutes les lignes avec au plus trois vendeurs parmi les dix premiers candidats interrogés. Chaque ligne est affectée au produit compatible le moins cher de la combinaison ; les résultats sont triés par sous-total produits, puis par nombre de vendeurs. Ces montants sont des estimations hors frais de préparation et de livraison, et ne constituent pas des offres confirmées.
+
+À ce stade, `structuredNeed.items` doit être alimenté par le futur moteur d'analyse / clarification. Les demandes existantes qui ne possèdent pas ces lignes structurées continuent d'être classées sur les spécialités et le catalogue, sans bonus budgétaire trompeur. La planification multi-vendeurs est exposée à la console opérateur par l'API, mais n'est pas encore proposée comme commande client.
