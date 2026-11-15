@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { prisma } from "@/lib/prisma";
 
 const COOKIE_NAME = "foodsignal_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
@@ -29,7 +30,7 @@ export async function createSession(user: SessionUser) {
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "strict",
     path: "/",
     maxAge: SESSION_TTL_SECONDS,
   });
@@ -40,7 +41,7 @@ export async function clearSession() {
   cookieStore.set(COOKIE_NAME, "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "strict",
     path: "/",
     maxAge: 0,
   });
@@ -53,18 +54,21 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 
   try {
     const { payload } = await jwtVerify(token, getSecret(), { algorithms: ["HS256"] });
-    if (
-      typeof payload.sub !== "string" ||
-      typeof payload.email !== "string" ||
-      typeof payload.name !== "string" ||
-      !["CUSTOMER", "SELLER", "OPERATOR"].includes(String(payload.role))
-    ) return null;
+    if (typeof payload.sub !== "string") return null;
+
+    // Read current role from the database so role changes and deleted accounts
+    // take effect immediately instead of waiting for the JWT to expire.
+    const user = await prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { id: true, email: true, name: true, role: true },
+    });
+    if (!user) return null;
 
     return {
-      id: payload.sub,
-      email: payload.email,
-      name: payload.name,
-      role: payload.role as SessionUser["role"],
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
     };
   } catch {
     return null;
