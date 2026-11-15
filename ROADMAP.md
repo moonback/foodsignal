@@ -74,7 +74,7 @@
 - [x] Checkout Stripe à destination du compte vendeur, avec commission configurable en points de base.
 - [x] Webhook signé pour confirmer, échouer ou expirer un paiement ; le retour navigateur ne valide jamais un paiement.
 - [x] Blocage de la préparation vendeur tant que le paiement n'est pas confirmé.
-- [ ] Tests Stripe en mode test, validation de la configuration Connect France et revue du modèle de responsabilité avant production.
+- [ ] Tests Stripe en mode test, validation de la configuration Connect France, migration / validation Accounts v2 et revue du modèle de responsabilité avant production.
 - [ ] Gestion des remboursements, litiges, rapprochement comptable et notifications.
 
 ## Lot 6 — Qualité et pilote terrain
