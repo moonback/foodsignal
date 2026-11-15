@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { writeOperatorAudit } from "@/lib/operator-audit";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -31,6 +32,13 @@ export async function PATCH(request: Request) {
       where: { id: input.sellerId },
       data: { isActive: input.isActive },
       select: { id: true, businessName: true, isActive: true },
+    });
+    await writeOperatorAudit({
+      actorId: user.id,
+      action: input.isActive ? "SELLER_ACTIVATED" : "SELLER_SUSPENDED",
+      entityType: "SELLER",
+      entityId: seller.id,
+      details: { businessName: seller.businessName, isActive: seller.isActive },
     });
     return NextResponse.json({ seller });
   } catch (error) {
