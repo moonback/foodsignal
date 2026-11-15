@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Activity, AlertCircle, CheckCircle2, Clock3, CreditCard, MapPin, Package, Send, Store, Users } from "lucide-react";
+import { Activity, CheckCircle2, CreditCard, MapPin, Package, Send, Store } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import SellerReviewActions from "./seller-review-actions";
