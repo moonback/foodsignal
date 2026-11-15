@@ -1,0 +1,15 @@
+[
+  {
+    "id": "1f9306a0-0834-41b3-9a87-bfde186116fc",
+    "content": "Fraîcheur index KnowledgeGraph faible (5%). Recommandation: lancer knowledge_reindex pour garantir la pertinence du RAG.",
+    "category": "todo",
+    "tags": [
+      "auto-enrich",
+      "reindex-needed"
+    ],
+    "createdAt": "2026-11-15T20:09:04.401Z",
+    "updatedAt": "2026-11-15T20:09:04.401Z",
+    "confidence": 0.65,
+    "usageCount": 0
+  }
+]
