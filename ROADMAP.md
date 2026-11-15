@@ -45,7 +45,8 @@
 - [x] Diffusion explicite aux 10 meilleurs candidats au-dessus du seuil de 25/100.
 - [x] Boîte de réception vendeur limitée aux données anonymisées.
 - [x] Dépôt d'offres structurées avec calcul du montant côté serveur.
-- [ ] Tests unitaires du scoring, audit de couverture des mots-clés et calibration sur des demandes réelles anonymisées.
+- [x] Suite de tests unitaires du scoring et du classement ajoutée (`npm test`).
+- [ ] Exécuter la suite, auditer la couverture des mots-clés et calibrer sur des demandes réelles anonymisées.
 
 ## Lot 3 — Compréhension et diffusion
 
