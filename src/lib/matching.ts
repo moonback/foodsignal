@@ -111,8 +111,8 @@ export function parseRequestedItems(value: unknown): MatchingRequestedItem[] {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
     const item = raw as Record<string, unknown>;
     if (typeof item.name !== "string" || !item.name.trim()
-      || typeof item.quantity !== "number" || !Number.isSafeInteger(item.quantity)
-      || item.quantity < 1 || item.quantity > 10000) return [];
+      || typeof item.quantity !== "number" || !Number.isFinite(item.quantity)
+      || item.quantity <= 0 || item.quantity > 10000) return [];
     return [{
       name: item.name.trim(),
       quantity: item.quantity,
@@ -133,7 +133,7 @@ export function estimateSellerBasket(
       .filter(candidate => productMatchesRequestedItem(candidate, item))
       .sort((a, b) => a.priceCents - b.priceCents || a.name.localeCompare(b.name, "fr"))[0];
     if (!product) return null;
-    const lineTotal = item.quantity * product.priceCents;
+    const lineTotal = Math.round(item.quantity * product.priceCents);
     if (!Number.isSafeInteger(lineTotal) || !Number.isSafeInteger(total + lineTotal)) return null;
     total += lineTotal;
   }
@@ -221,7 +221,7 @@ export function planMultiSellerBaskets(
         || a.product.name.localeCompare(b.product.name, "fr"));
       const choice = options[0];
       if (!choice) return;
-      const lineTotalCents = item.quantity * choice.product.priceCents;
+      const lineTotalCents = Math.round(item.quantity * choice.product.priceCents);
       if (!Number.isSafeInteger(lineTotalCents)) return;
       allocations.push({
         requestedItem: item,
