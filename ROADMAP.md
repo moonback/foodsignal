@@ -63,12 +63,15 @@
 
 ## Lot 5 — Commande et réception
 
-- [ ] Confirmation explicite par le client.
-- [ ] Gestion transactionnelle des commandes et statuts.
-- [ ] Retrait chez le commerçant.
+- [x] Confirmation explicite d'une proposition par le client, avec contrôle du propriétaire et du statut.
+- [x] Création transactionnelle d'une commande unique et rejet des propositions concurrentes.
+- [x] Espace client de suivi de commande.
+- [x] Espace vendeur pour faire progresser les statuts de préparation et de remise.
+- [x] Parcours de retrait et de livraison avec adresse obligatoire pour la livraison.
+- [ ] Notifications et suivi des états.
 - [ ] Livraison par partenaires locaux, après contractualisation.
 - [ ] Notifications et suivi des états.
-- [ ] Paiement marketplace et reversements, après choix et configuration du prestataire.
+- [ ] Paiement marketplace et reversements, après choix et configuration du prestataire. Aucun paiement n'est déclenché dans le parcours actuel.
 
 ## Lot 6 — Qualité et pilote terrain
 
