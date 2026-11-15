@@ -68,7 +68,8 @@
 - [x] Espace client de suivi de commande.
 - [x] Espace vendeur pour faire progresser les statuts de préparation et de remise.
 - [x] Parcours de retrait et de livraison avec adresse obligatoire pour la livraison.
-- [ ] Notifications et suivi des états.
+- [x] Notifications intégrées persistantes : confirmation, paiement, progression commande, remboursement et litige, avec compteur et lecture individuelle / globale.
+- [ ] Notifications e-mail, SMS ou push via fournisseur externe, préférences et consentements.
 - [ ] Livraison par partenaires locaux, après contractualisation.
 - [x] Connexion Stripe Express du commerçant et lecture des capacités de transfert / versement.
 - [x] Checkout Stripe à destination du compte vendeur, avec commission configurable en points de base.
@@ -82,7 +83,7 @@
 - [x] Déclenchement opérateur du remboursement intégral depuis la console, avec motif et confirmation explicite.
 - [ ] Interface de traitement des litiges : collecte de preuves et soumission des réponses à Stripe.
 - [ ] Gestion des remboursements partiels, collecte de preuves et soumission des réponses aux litiges.
-- [ ] Notifications et rapprochement comptable des remboursements / reversals.
+- [ ] Notifications externes et rapprochement comptable des remboursements / reversals.
 
 ## Lot 6 — Qualité et pilote terrain
 
