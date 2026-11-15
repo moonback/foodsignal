@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import ProductCatalog from "./product-catalog";
 import SellerDemandInbox from "./seller-demand-inbox";
+import SellerOrderActions from "./seller-order-actions";
 
 export default async function SellerDashboardPage() {
   const user = await getCurrentUser();
@@ -19,6 +20,18 @@ export default async function SellerDashboardPage() {
     },
   });
   if (!seller) redirect("/");
+  const orders = await prisma.offer.findMany({
+    where: { sellerId: seller.id, status: "ACCEPTED", demand: { order: { isNot: null } } },
+    orderBy: { createdAt: "desc" },
+    select: {
+      demand: {
+        select: {
+          id: true, city: true, anonymizedBrief: true,
+          order: { select: { id: true, status: true, fulfillmentMode: true, totalCents: true, deliveryAddress: true, updatedAt: true } },
+        },
+      },
+    },
+  });
 
   return <main className="shell" style={{ paddingTop: 42, paddingBottom: 80 }}>
     <header className="topbar" style={{ padding: "0 0 24px" }}>
@@ -42,6 +55,21 @@ export default async function SellerDashboardPage() {
         <p className="subtle"><Package size={15} style={{ verticalAlign: "middle", marginRight: 6 }}/>Spécialités : {seller.specialties.join(", ")}</p>
       </section>
     </div>
+    <section className="section" style={{ paddingBottom: 0 }}>
+      <div className="section-heading"><div><div className="eyebrow">Commandes confirmées</div><h2>À préparer et à remettre</h2></div><p>{orders.length} commande(s)</p></div>
+      <div style={{ display: "grid", gap: 12 }}>
+        {orders.map(({ demand }) => demand.order && <article className="panel" key={demand.order.id}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div><strong>Commande {demand.order.id.slice(-8).toUpperCase()}</strong><p className="subtle">{demand.city} · {demand.order.fulfillmentMode === "DELIVERY" ? "Livraison" : "Retrait"}</p></div>
+            <strong>{(demand.order.totalCents/100).toLocaleString("fr-FR",{style:"currency",currency:"EUR"})}</strong>
+          </div>
+          <p style={{ lineHeight: 1.5 }}>{demand.anonymizedBrief}</p>
+          {demand.order.fulfillmentMode === "DELIVERY" && <p className="subtle"><MapPin size={14} style={{ verticalAlign: "middle", marginRight: 5 }}/>{demand.order.deliveryAddress}</p>}
+          <SellerOrderActions orderId={demand.order.id} status={demand.order.status} fulfillmentMode={demand.order.fulfillmentMode}/>
+        </article>)}
+        {orders.length === 0 && <div className="panel"><p className="subtle">Aucune commande confirmée pour le moment.</p></div>}
+      </div>
+    </section>
     <SellerDemandInbox />
     <section className="section" style={{ paddingBottom: 0 }}>
       <div className="section-heading"><div><div className="eyebrow">Offre commerciale</div><h2>Votre catalogue</h2></div><p>{seller.products.length} produit(s)</p></div>
