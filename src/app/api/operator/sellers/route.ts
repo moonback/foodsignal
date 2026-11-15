@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { writeOperatorAudit } from "@/lib/operator-audit";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -28,17 +27,22 @@ export async function PATCH(request: Request) {
 
   try {
     const input = z.object({ sellerId: z.string().min(1), isActive: z.boolean() }).parse(await request.json());
-    const seller = await prisma.seller.update({
-      where: { id: input.sellerId },
-      data: { isActive: input.isActive },
-      select: { id: true, businessName: true, isActive: true },
-    });
-    await writeOperatorAudit({
-      actorId: user.id,
-      action: input.isActive ? "SELLER_ACTIVATED" : "SELLER_SUSPENDED",
-      entityType: "SELLER",
-      entityId: seller.id,
-      details: { businessName: seller.businessName, isActive: seller.isActive },
+    const seller = await prisma.$transaction(async transaction => {
+      const updated = await transaction.seller.update({
+        where: { id: input.sellerId },
+        data: { isActive: input.isActive },
+        select: { id: true, businessName: true, isActive: true },
+      });
+      await transaction.operatorAuditLog.create({
+        data: {
+          actorId: user.id,
+          action: input.isActive ? "SELLER_ACTIVATED" : "SELLER_SUSPENDED",
+          entityType: "SELLER",
+          entityId: updated.id,
+          details: { businessName: updated.businessName, isActive: updated.isActive },
+        },
+      });
+      return updated;
     });
     return NextResponse.json({ seller });
   } catch (error) {
