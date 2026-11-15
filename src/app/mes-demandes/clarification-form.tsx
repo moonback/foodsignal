@@ -33,7 +33,7 @@ export default function ClarificationForm({ demandId, questions }: { demandId: s
     <strong>Quelques précisions sont nécessaires</strong>
     <p style={{ whiteSpace: "pre-line", margin: "8px 0" }}>{questions}</p>
     <label htmlFor={`clarification-${demandId}`} style={{ display: "block", fontWeight: 700, marginBottom: 7 }}>Votre réponse</label>
-    <textarea id={`clarification-${demandId}`} value={answer} onChange={event => setAnswer(event.target.value)} maxLength={1000} minLength={2} required placeholder="Précisez les quantités ou unités souhaitées…" style={{ width: "100%", minHeight: 82, border: "1px solid var(--line)", borderRadius: 10, padding: 12, background: "white" }}/>
+    <textarea id={`clarification-${demandId}`} value={answer} onChange={event => setAnswer(event.target.value)} maxLength={1000} minLength={2} required placeholder="Ex. : 2 kg de pommes ; 1 pièce de pain. Ne répondez pas seulement par le nombre de convives." style={{ width: "100%", minHeight: 82, border: "1px solid var(--line)", borderRadius: 10, padding: 12, background: "white" }}/>
     {error && <p role="alert" style={{ color: "#b42318" }}>{error}</p>}
     {message && <p role="status">{message}</p>}
     <button className="primary" disabled={busy || answer.trim().length < 2} style={{ marginTop: 10 }}>{busy ? "Analyse…" : "Envoyer mes précisions"}</button>
