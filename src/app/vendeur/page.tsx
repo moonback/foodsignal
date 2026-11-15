@@ -7,6 +7,7 @@ import ProductCatalog from "./product-catalog";
 import SellerDemandInbox from "./seller-demand-inbox";
 import SellerOrderActions from "./seller-order-actions";
 import StripeConnectPanel from "./stripe-connect-panel";
+import NotificationCenter from "@/components/notification-center";
 
 export default async function SellerDashboardPage() {
   const user = await getCurrentUser();
@@ -38,7 +39,7 @@ export default async function SellerDashboardPage() {
   return <main className="shell" style={{ paddingTop: 42, paddingBottom: 80 }}>
     <header className="topbar" style={{ padding: "0 0 24px" }}>
       <Link className="brand" href="/"><span className="brand-mark"><Store size={19}/></span>FOOD SIGNAL</Link>
-      <Link className="secondary" href="/"><ArrowLeft size={14} style={{ verticalAlign: "middle", marginRight: 6 }}/>Accueil</Link>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}><NotificationCenter/><Link className="secondary" href="/"><ArrowLeft size={14} style={{ verticalAlign: "middle", marginRight: 6 }}/>Accueil</Link></div>
     </header>
     <div className="eyebrow">Espace professionnel</div>
     <h1 style={{ fontSize: "clamp(2rem,5vw,3.4rem)", margin: "12px 0" }}>Bonjour, {seller.businessName}.</h1>
