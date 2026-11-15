@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft, Clock3, MapPin, Package, Store } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
+import OrderSelection from "./order-selection";
 import { prisma } from "@/lib/prisma";
 
 const demandLabels: Record<string, string> = {
@@ -30,6 +31,7 @@ export default async function MyDemandsPage() {
     select: {
       id: true, anonymizedBrief: true, city: true, budgetMaxCents: true,
       status: true, createdAt: true, requestedAt: true, fulfillmentMode: true,
+      order: { select: { id: true, status: true } },
       offers: {
         where: { status: "SUBMITTED" },
         orderBy: [{ subtotalCents: "asc" }],
@@ -58,6 +60,7 @@ export default async function MyDemandsPage() {
         </div>
         <p style={{ lineHeight: 1.6 }}>{demand.anonymizedBrief}</p>
         <p className="subtle"><MapPin size={14} style={{ verticalAlign: "middle", marginRight: 5 }}/>{demand.city} · Budget : {demand.budgetMaxCents ? euro(demand.budgetMaxCents) : "libre"} · Réception : {demand.fulfillmentMode === "DELIVERY" ? "Livraison" : demand.fulfillmentMode === "PICKUP" ? "Retrait" : "À convenir"}</p>
+        {demand.order && <div className="notice" style={{ marginTop: 14 }}>Une commande est confirmée. <Link href={`/commandes/${demand.order.id}`}>Suivre son avancement</Link></div>}
         <div style={{ borderTop: "1px solid var(--line)", paddingTop: 18, marginTop: 18 }}>
           <div className="section-heading"><div><div className="eyebrow">Réponses des professionnels</div><h3>{demand.offers.length} proposition(s)</h3></div></div>
           {demand.offers.length ? <div style={{ display: "grid", gap: 12 }}>
@@ -81,6 +84,8 @@ export default async function MyDemandsPage() {
                 <div className="signal-line"><span>Livraison</span><strong>{euro(offer.deliveryCents)}</strong></div>
                 <p className="subtle"><Clock3 size={14} style={{ verticalAlign: "middle", marginRight: 5 }}/>Modalités : {offer.fulfillmentModes.map(mode => mode === "PICKUP" ? "Retrait" : "Livraison").join(" / ")}{offer.availableAt ? " · Disponible le "+offer.availableAt.toLocaleString("fr-FR") : ""}</p>
                 {offer.notes && <p className="subtle">{offer.notes}</p>}
+                {!demand.order && <OrderSelection offerId={offer.id} fulfillmentModes={offer.fulfillmentModes} sellerName={offer.seller.businessName}/>}
+
               </div>;
             })}
           </div> : <div className="notice">Les commerçants ciblés n'ont pas encore répondu. Vous pourrez comparer leurs offres ici dès leur réception.</div>}
