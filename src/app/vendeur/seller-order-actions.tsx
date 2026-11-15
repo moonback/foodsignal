@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 
-type Props = { orderId: string; status: string; fulfillmentMode: "PICKUP" | "DELIVERY" };
+type Props = { orderId: string; status: string; paymentStatus: string; fulfillmentMode: "PICKUP" | "DELIVERY" };
 const nextStatus: Record<string, { value: string; label: string }> = {
   CONFIRMED: { value: "PREPARING", label: "Démarrer la préparation" },
   PREPARING: { value: "READY", label: "Marquer prête au retrait" },
@@ -11,11 +11,11 @@ const nextStatus: Record<string, { value: string; label: string }> = {
   OUT_FOR_DELIVERY: { value: "COMPLETED", label: "Confirmer la livraison" },
 };
 
-export default function SellerOrderActions({ orderId, status, fulfillmentMode }: Props) {
+export default function SellerOrderActions({ orderId, status, paymentStatus, fulfillmentMode }: Props) {
   const [current, setCurrent] = useState(status);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const next = current === "PREPARING" && fulfillmentMode === "DELIVERY"
+  const next = paymentStatus !== "PAID" ? undefined : current === "PREPARING" && fulfillmentMode === "DELIVERY"
     ? { value: "OUT_FOR_DELIVERY", label: "Confirmer le départ en livraison" }
     : nextStatus[current];
 
@@ -40,6 +40,7 @@ export default function SellerOrderActions({ orderId, status, fulfillmentMode }:
   };
   return <div style={{ marginTop: 12 }}>
     <span className="pill">{labels[current] || current}</span>
+    {paymentStatus !== "PAID" && <p className="subtle" style={{ marginTop: 8 }}>En attente du paiement confirmé par Stripe. La préparation est bloquée.</p>}
     {next && <button className="primary" disabled={busy} onClick={advance} style={{ display: "block", marginTop: 12 }}>{busy ? "Mise à jour…" : next.label} <ArrowRight size={15} style={{ verticalAlign: "middle", marginLeft: 5 }}/></button>}
     {error && <p role="alert" style={{ color: "#b42318", fontSize: 12 }}>{error}</p>}
   </div>;
