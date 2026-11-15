@@ -60,8 +60,10 @@ model Product {
 
 model Demand {
   id               String       @id @default(cuid())
-  customerId       String
-  customer         User         @relation("CustomerDemands", fields: [customerId], references: [id])
+  customerId       String?
+  customer         User?        @relation("CustomerDemands", fields: [customerId], references: [id])
+  customerName     String
+  customerEmail    String
   rawDescription   String
   anonymizedBrief  String
   structuredNeed  Json?
