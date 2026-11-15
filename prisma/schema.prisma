@@ -15,6 +15,7 @@ enum OrderStatus { CONFIRMED PREPARING READY OUT_FOR_DELIVERY COMPLETED CANCELLE
 enum PaymentStatus { PENDING PAID FAILED REFUNDED }
 enum PaymentRefundStatus { PENDING SUCCEEDED FAILED }
 enum StripeDisputeStatus { WARNING_NEEDS_RESPONSE WARNING_UNDER_REVIEW WARNING_CLOSED NEEDS_RESPONSE UNDER_REVIEW WON LOST }
+enum NotificationType { ORDER_CONFIRMED PAYMENT_RECEIVED ORDER_STATUS_CHANGED REFUND_UPDATED DISPUTE_OPENED }
 
 model User {
   id           String   @id @default(cuid())
@@ -25,6 +26,7 @@ model User {
   role         UserRole @default(CUSTOMER)
   seller       Seller?
   demands      Demand[] @relation("CustomerDemands")
+  notifications Notification[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -128,6 +130,21 @@ model Order {
   disputes        StripeDispute[]
   confirmedAt     DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
+}
+
+model Notification {
+  id        String @id @default(cuid())
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  href      String
+  eventKey  String
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+  @@unique([userId, eventKey])
+  @@index([userId, readAt, createdAt])
 }
 
 model PaymentRefund {
