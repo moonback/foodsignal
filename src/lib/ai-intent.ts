@@ -43,8 +43,8 @@ function quantityHasVerifiableEvidence(item: IntentItem, description: string) {
   const evidencedQuantity = numeric ? Number(numeric[0].replace(",", ".")) : word ? frenchNumbers[word[0]] : null;
   if (evidencedQuantity === null || Math.abs(evidencedQuantity - item.quantity!) > 0.0001) return false;
   const itemTokens = normalizeEvidence(item.name).match(/[a-z0-9]+/g) || [];
-  const evidenceTokens = normalized.match(/[a-z0-9]+/g) || [];
-  return itemTokens.some(token => evidenceTokens.some(candidate => candidate === token || candidate.startsWith(token) || token.startsWith(candidate)));
+  const sourceTokens = normalizeEvidence(description).match(/[a-z0-9]+/g) || [];
+  return itemTokens.some(token => sourceTokens.some(candidate => candidate === token || candidate.startsWith(token) || token.startsWith(candidate)));
 }
 
 function unitHasVerifiableEvidence(item: IntentItem) {
