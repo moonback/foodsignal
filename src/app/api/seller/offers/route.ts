@@ -53,6 +53,13 @@ export async function POST(request: Request) {
       update: data,
       select: { id: true, subtotalCents: true, preparationCents: true, deliveryCents: true, status: true, createdAt: true },
     });
+    const [recipientCount, offerCount] = await Promise.all([
+      prisma.demandRecipient.count({ where: { demandId: input.demandId } }),
+      prisma.offer.count({ where: { demandId: input.demandId, status: "SUBMITTED" } }),
+    ]);
+    if (recipientCount > 0 && offerCount >= recipientCount) {
+      await prisma.demand.update({ where: { id: input.demandId }, data: { status: "PROPOSAL_READY" } });
+    }
     return NextResponse.json({ offer }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: "Vérifiez les lignes et conditions de votre proposition.", details: error.issues }, { status: 400 });
