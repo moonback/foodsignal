@@ -40,7 +40,7 @@ test("ne complète pas une quantité absente et demande une clarification", asyn
   process.env.OPENAI_API_KEY = "test-key";
   global.fetch = async () => fakeResponse({
     summary: "Des pommes pour une commande.",
-    items: [{ name: "Pommes", quantity: null, unit: null, category: "Fruits et légumes" }],
+    items: [{ name: "Pommes", quantity: null, unit: null, category: "Fruits et légumes", quantityEvidence: null }],
     dietaryConstraints: [],
     preferences: [],
     clarificationQuestions: [],
@@ -55,7 +55,7 @@ test("demande l'unité quand une quantité existe mais n'est pas qualifiée", as
   process.env.OPENAI_API_KEY = "test-key";
   global.fetch = async () => fakeResponse({
     summary: "Deux pains.",
-    items: [{ name: "Pain", quantity: 2, unit: null, category: "Boulangerie" }],
+    items: [{ name: "Pain", quantity: 2, unit: null, category: "Boulangerie", quantityEvidence: "2 pains" }],
     dietaryConstraints: [],
     preferences: [],
     clarificationQuestions: [],
@@ -70,7 +70,7 @@ test("accepte une demande dont les quantités et unités sont explicitement stru
   process.env.OPENAI_API_KEY = "test-key";
   global.fetch = async () => fakeResponse({
     summary: "Deux kilogrammes de pommes.",
-    items: [{ name: "Pommes", quantity: 2, unit: "kg", category: "Fruits et légumes" }],
+    items: [{ name: "Pommes", quantity: 2, unit: "kg", category: "Fruits et légumes", quantityEvidence: "2 kg de pommes" }],
     dietaryConstraints: [],
     preferences: [],
     clarificationQuestions: [],
@@ -79,4 +79,19 @@ test("accepte une demande dont les quantités et unités sont explicitement stru
   assert.equal(intent.isComplete, true);
   assert.equal(intent.items[0].quantity, 2);
   assert.equal(intent.items[0].unit, "kg");
+});
+
+test("rejette une quantité attribuée aux convives plutôt qu'au produit", async () => {
+  process.env.OPENAI_API_KEY = "test-key";
+  global.fetch = async () => fakeResponse({
+    summary: "Des pommes pour quatre personnes.",
+    items: [{ name: "Pommes", quantity: 4, unit: "pièce", category: "Fruits et légumes", quantityEvidence: "pour 4 personnes" }],
+    dietaryConstraints: [],
+    preferences: [],
+    clarificationQuestions: [],
+  });
+  const intent = await analyzeFoodIntent("Je voudrais des pommes pour 4 personnes.");
+  assert.equal(intent.items[0].quantity, null);
+  assert.equal(intent.items[0].unit, null);
+  assert.equal(intent.isComplete, false);
 });
