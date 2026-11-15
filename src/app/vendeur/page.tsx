@@ -33,7 +33,7 @@ export default async function SellerDashboardPage() {
         <div className="eyebrow">Statut du compte</div>
         <h3 style={{ marginTop: 12 }}>{seller.isActive ? "Compte validé" : "Vérification en attente"}</h3>
         <p className="subtle">{seller.isActive ? "Votre établissement est activé par l'équipe FOOD SIGNAL." : "Votre profil est enregistré mais ne reçoit pas encore de demandes. Une validation opérateur est nécessaire."}</p>
-        <div className="notice"><Clock3 size={17} style={{ verticalAlign: "middle", marginRight: 7 }}/>{seller.isActive ? "Votre catalogue est prêt à être préparé. Le matching n'est pas encore ouvert." : "Vous pouvez préparer votre catalogue pendant la vérification. Il ne sera pas visible des clients."}</div>
+        <div className="notice"><Clock3 size={17} style={{ verticalAlign: "middle", marginRight: 7 }}/>{seller.isActive ? "Votre établissement peut recevoir les demandes correspondant à ses spécialités et à sa ville." : "Vous pouvez préparer votre catalogue pendant la vérification. Il ne sera pas visible des clients."}</div>
       </section>
       <section className="panel">
         <div className="eyebrow">Votre établissement</div>
