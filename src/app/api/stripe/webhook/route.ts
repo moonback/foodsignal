@@ -28,7 +28,8 @@ function metadataOrderId(object: StripeObject) {
 }
 function stripeDisputeStatus(value: unknown) {
   const allowed = ["WARNING_NEEDS_RESPONSE", "WARNING_UNDER_REVIEW", "WARNING_CLOSED", "NEEDS_RESPONSE", "UNDER_REVIEW", "WON", "LOST"] as const;
-  return typeof value === "string" && (allowed as readonly string[]).includes(value) ? value : "UNDER_REVIEW";
+  const normalized = typeof value === "string" ? value.toUpperCase() : "";
+  return (allowed as readonly string[]).includes(normalized) ? normalized : "UNDER_REVIEW";
 }
 
 export async function POST(request: Request) {

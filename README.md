@@ -128,3 +128,8 @@ Les fichiers ont été ajoutés via l'API GitHub. Les dépendances, Prisma Clien
 - Le remboursement Stripe demande également la reversal du transfert vendeur et le remboursement de la commission plateforme.
 - Les événements de litige Stripe sont persistés dans `StripeDispute` pour suivi ; aucune réponse ou reversal de litige n'est automatisée.
 - Ce lot ne couvre pas les remboursements partiels, l'interface opérateur, les notifications ni le rapprochement comptable. Consulter [la procédure Stripe](./docs/operations/stripe-refunds-disputes.md).
+
+
+## Console opérateur — paiements
+
+La console `/operateur` présente les 100 commandes les plus récentes, les paiements confirmés, remboursements et litiges Stripe. Les opérateurs peuvent déclencher un remboursement intégral depuis la fiche de commande après saisie d'un motif. Les événements de litige restent à traiter dans le Dashboard Stripe ; la console sert au suivi et n'envoie aucune preuve ni réponse automatiquement.

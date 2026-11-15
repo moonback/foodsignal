@@ -78,7 +78,9 @@
 - [x] Endpoint opérateur de remboursement intégral, réservé au rôle OPERATOR et idempotent.
 - [x] Reversal du transfert vendeur et remboursement de la commission plateforme sur remboursement volontaire.
 - [x] Persistance des événements de litige Stripe liés au PaymentIntent.
-- [ ] Interface opérateur de remboursement et de traitement des litiges.
+- [x] Tableau de bord opérateur des paiements, remboursements et litiges (suivi des 100 dernières commandes, filtres et actualisation).
+- [x] Déclenchement opérateur du remboursement intégral depuis la console, avec motif et confirmation explicite.
+- [ ] Interface de traitement des litiges : collecte de preuves et soumission des réponses à Stripe.
 - [ ] Gestion des remboursements partiels, collecte de preuves et soumission des réponses aux litiges.
 - [ ] Notifications et rapprochement comptable des remboursements / reversals.
 
