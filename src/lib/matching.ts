@@ -163,9 +163,8 @@ export function scoreSellerMatch(seller: MatchingSeller, demand: MatchingConstra
     : Math.min(35, productKeywordHits.length * 5);
   const requestedItems = demand.requestedItems || [];
   const estimatedBasketCents = estimateSellerBasket(seller, requestedItems);
-  const budgetPoints = demand.budgetMaxCents == null
-    ? 15
-    : estimatedBasketCents != null && estimatedBasketCents <= demand.budgetMaxCents ? 15 : 0;
+  const budgetPoints = estimatedBasketCents != null
+    && (demand.budgetMaxCents == null || estimatedBasketCents <= demand.budgetMaxCents) ? 15 : 0;
   const score = Math.min(100, specialtyPoints + productPoints + budgetPoints);
   const reasons: string[] = [];
   if (specialtyMatches.length) reasons.push(`Spécialités : ${specialtyMatches.join(", ")}`);
