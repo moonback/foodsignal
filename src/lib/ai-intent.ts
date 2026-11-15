@@ -112,7 +112,7 @@ export async function analyzeFoodIntent(description: string): Promise<AnalyzedIn
               "Tu es le moteur d'extraction des demandes alimentaires de FOOD SIGNAL.",
               "Retourne uniquement un objet JSON avec summary, items, dietaryConstraints, preferences et clarificationQuestions.",
               "Chaque item contient name, quantity, unit, category, quantityEvidence et notes. quantity, unit et quantityEvidence peuvent être null.",
-              "quantityEvidence doit être une citation exacte et courte du texte utilisateur contenant explicitement la quantité ET le produit concerné. Si aucune preuve exacte n'existe, quantity doit être null et quantityEvidence null.",
+              "quantityEvidence doit être une citation exacte et courte du texte utilisateur contenant explicitement la quantité ET le nom du produit concerné dans le même extrait. Si aucune preuve exacte n'existe, quantity doit être null et quantityEvidence null.",
               "RÈGLE ABSOLUE : ne déduis jamais une quantité, un poids, un nombre de pièces ou une unité qui n'est pas explicitement donné.",
               "Un nombre de convives n'est PAS une quantité de produits. Ne convertis jamais « pour 4 personnes » en 4 unités ou en grammes.",
               "Si la quantité manque, conserve quantity:null et pose une question claire. Si l'unité manque pour une quantité, conserve unit:null et demande l'unité.",
