@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { notifyOrderUsers } from "@/lib/notifications";
 
 const schema = z.object({
   offerId: z.string().min(1),
@@ -61,6 +62,10 @@ export async function POST(request: Request) {
       });
       await tx.offer.update({ where: { id: offer.id }, data: { status: "ACCEPTED" } });
       return created;
+    });
+    await notifyOrderUsers({
+      orderId: order.id, eventKey: "order-confirmed", type: "ORDER_CONFIRMED",
+      title: "Commande confirmée", message: "Votre commande a été confirmée. Le commerçant peut maintenant la préparer.",
     });
     return NextResponse.json({ order }, { status: 201 });
   } catch (error) {
