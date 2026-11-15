@@ -84,6 +84,9 @@ test("ne calcule pas un panier incomplet ni une unité incompatible", () => {
   });
   assert.equal(estimateSellerBasket(incomplete, [{ name: "Tomates", quantity: 2, unit: "pièce" }]), null);
   assert.equal(estimateSellerBasket(incomplete, [{ name: "Pain", quantity: 1, unit: "kg" }]), null);
+  assert.equal(estimateSellerBasket(seller("missing-unit", {
+    products: [{ name: "Tomates", category: "Fruits et légumes", priceCents: 400, isAvailable: true }],
+  }), [{ name: "Tomates", quantity: 2, unit: "kg" }]), null);
 });
 
 test("attribue un score de 100 si le panier complet est sous le budget", () => {
