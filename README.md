@@ -75,7 +75,7 @@ Ouvrir `http://localhost:3000`.
 - Activation et suspension des comptes vendeurs.
 - Compteurs de profils en attente et actifs.
 - Les routes d'administration exigent le rôle OPERATOR côté serveur.
-- Classement déterministe des vendeurs actifs de la même ville : adéquation des spécialités (50 points), présence de produits du catalogue (35 points) et indice budgétaire (15 points).
+- Classement déterministe des vendeurs actifs de la même ville : adéquation des spécialités (50 points), présence de produits disponibles du catalogue (35 points) et coût du panier structuré (15 points). Sans lignes et quantités structurées, aucun point budgétaire n'est attribué.
 - Diffusion opérateur aux 10 meilleurs candidats dépassant le seuil de 25/100 ; les motifs et scores sont visibles avant l'envoi.
 - Le coût du panier vendeur est estimé à partir des lignes structurées, des quantités, des unités compatibles et des prix catalogue disponibles. Un panier incomplet n'est pas présenté comme chiffré. Les frais de préparation et de livraison ne sont pas inclus. Le score ne prouve ni disponibilité réelle à la date demandée, ni capacité logistique, ni prix final.
 - Notifications opérateur pour les remboursements et les litiges Stripe.
@@ -149,9 +149,9 @@ Ce lot fournit des notifications dans l’application uniquement. Aucun e-mail, 
 
 ## Matching vendeur — première version explicable
 
-Le moteur actuel reste déterministe et sans appel à un fournisseur IA. Il détecte des catégories à partir du résumé anonymisé, élimine les vendeurs inactifs ou situés dans une autre ville, puis classe les candidats selon trois signaux vérifiables : spécialités déclarées (50 points), produits disponibles du catalogue (35 points) et indice budgétaire indicatif (15 points). Seuls les dix meilleurs candidats ayant au moins 25/100 sont proposés à la diffusion opérateur.
+Le moteur actuel reste déterministe et sans appel à un fournisseur IA. Il détecte des catégories à partir du résumé anonymisé, élimine les vendeurs inactifs ou situés dans une autre ville, puis classe les candidats selon les spécialités déclarées (50 points), les produits disponibles du catalogue (35 points) et, uniquement si les lignes et quantités sont structurées, le coût du panier complet (15 points). Seuls les dix meilleurs candidats ayant au moins 25/100 sont proposés à la diffusion opérateur.
 
-La console affiche le nombre de candidats, les meilleurs scores et les raisons principales. La diffusion reste une action explicite de l'opérateur. Les coordonnées personnelles et la description originale ne sont jamais utilisées par ce moteur ni transmises aux vendeurs. Les contraintes de quantité, la disponibilité à une date précise, la zone de livraison, le rayon géographique, la conformité détaillée des lignes et l'optimisation multi-vendeurs ne sont pas encore modélisés par ce score.
+La console affiche le nombre de candidats, les meilleurs scores et les raisons principales. La diffusion reste une action explicite de l'opérateur. Les coordonnées personnelles et la description originale ne sont jamais utilisées par ce moteur ni transmises aux vendeurs. Les estimations structurées prennent en compte les quantités et les unités renseignées, mais ne vérifient pas la disponibilité à une date précise, la zone de livraison ni les frais annexes. La planification multi-vendeurs est disponible dans la console opérateur sous forme d'estimation, pas encore comme une commande client.
 
 
 ## Estimation de panier et combinaison multi-vendeurs
