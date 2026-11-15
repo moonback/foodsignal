@@ -1,6 +1,6 @@
 # FOOD SIGNAL — Roadmap technique
 
-> Statuts basés sur le code présent dans cette branche. Une fonctionnalité n'est déclarée TERMINÉE que si elle est implémentée et vérifiée par des tests exécutés.
+> Les cases cochées décrivent le code présent. Une fonctionnalité n'est déclarée terminée que lorsqu'elle a été exécutée et vérifiée par des tests.
 
 ## Lot 0 — Fondation web
 
@@ -8,7 +8,7 @@
 - [x] Styles responsive de la première page client.
 - [x] Schéma de données initial : utilisateurs, vendeurs, produits, demandes, offres et commandes.
 - [x] Client Prisma singleton.
-- [x] API de création de demande avec validation Zod.
+- [x] API de création de demande avec validation Zod et rattachement au compte connecté.
 - [x] Stockage séparé du texte original et du résumé anonymisé.
 - [x] Limitation à la ville configurée via `PILOT_CITY` lorsque cette variable est renseignée.
 - [ ] Installation des dépendances, génération Prisma, migrations et build — non exécutés depuis le connecteur GitHub.
@@ -16,17 +16,26 @@
 
 ## Lot 1 — Sécurité et comptes
 
-- [ ] Authentification et récupération de compte.
-- [ ] Sessions sécurisées, cookies HttpOnly et protection CSRF adaptée.
-- [ ] Autorisations strictes par rôle : particulier, vendeur, opérateur.
+- [x] Création de compte particulier et connexion e-mail / mot de passe.
+- [x] Hachage des mots de passe avec bcrypt (coût 12).
+- [x] Session signée de 7 jours dans un cookie HttpOnly, SameSite Strict et Secure en production.
+- [x] Vérification de l'existence du compte et relecture du rôle depuis PostgreSQL à chaque session.
+- [x] Contrôle serveur : seuls les comptes CUSTOMER peuvent créer une demande.
+- [ ] Vérification de l'adresse e-mail et récupération / réinitialisation de compte.
+- [ ] Rate limiting distribué sur l'inscription et la connexion, protection anti-abus et journalisation.
+- [ ] Revue CSRF / origine et tests de sécurité avant ouverture publique.
 - [ ] Validation RGPD : base légale, information, durée de conservation, export et suppression.
-- [ ] Rate limiting, anti-abus, journalisation et politique de rétention.
-- [ ] Ne jamais exposer `rawDescription`, e-mail, téléphone ou adresse privée aux vendeurs.
+- [ ] Politique de rétention et procédure de suppression des données personnelles.
+- [ ] Tests prouvant qu'aucun e-mail, téléphone, adresse privée ou texte brut n'est exposé aux vendeurs.
 
 ## Lot 2 — Espace professionnel
 
-- [ ] Inscription et validation des commerçants / producteurs.
-- [ ] Profil, spécialités, zone desservie et horaires.
+- [x] Inscription professionnelle rattachée à un compte authentifié.
+- [x] Profil avec nom, description, spécialités, adresse et ville.
+- [x] Nouveau profil inactif par défaut ; validation opérateur requise avant activation.
+- [x] Premier tableau de bord vendeur avec statut de validation.
+- [ ] Interface opérateur pour vérifier, activer ou refuser un professionnel.
+- [ ] Zone desservie, horaires et modalités de réception.
 - [ ] Catalogue, unités, prix et disponibilités.
 - [ ] Tableau des demandes ciblées et réponses commerciales.
 
