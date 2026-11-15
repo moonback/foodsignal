@@ -70,7 +70,6 @@
 - [x] Parcours de retrait et de livraison avec adresse obligatoire pour la livraison.
 - [ ] Notifications et suivi des états.
 - [ ] Livraison par partenaires locaux, après contractualisation.
-- [ ] Notifications et suivi des états.
 - [ ] Paiement marketplace et reversements, après choix et configuration du prestataire. Aucun paiement n'est déclenché dans le parcours actuel.
 
 ## Lot 6 — Qualité et pilote terrain
