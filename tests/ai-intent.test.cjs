@@ -95,3 +95,17 @@ test("rejette une quantité attribuée aux convives plutôt qu'au produit", asyn
   assert.equal(intent.items[0].unit, null);
   assert.equal(intent.isComplete, false);
 });
+
+test("accepte une précision séparée si le produit est déjà identifié dans la demande", async () => {
+  process.env.OPENAI_API_KEY = "test-key";
+  global.fetch = async () => fakeResponse({
+    summary: "Deux kilogrammes de pommes.",
+    items: [{ name: "Pommes", quantity: 2, unit: "kg", category: "Fruits et légumes", quantityEvidence: "2 kg" }],
+    dietaryConstraints: [],
+    preferences: [],
+    clarificationQuestions: [],
+  });
+  const intent = await analyzeFoodIntent("Je voudrais des pommes.\\nPrécision du client : 2 kg");
+  assert.equal(intent.isComplete, true);
+  assert.equal(intent.items[0].quantity, 2);
+});
