@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import SellerReviewActions from "./seller-review-actions";
 import DemandDistributionPanel from "./demand-distribution-panel";
+import OperatorPaymentsDashboard from "./operator-payments-dashboard";
 
 export default async function OperatorPage() {
   const user = await getCurrentUser();
@@ -21,6 +22,23 @@ export default async function OperatorPage() {
     },
   });
   const pending = sellers.filter(seller => !seller.isActive).length;
+  const paymentOrders = await prisma.order.findMany({
+    orderBy: { updatedAt: "desc" }, take: 100,
+    select: {
+      id: true, status: true, paymentStatus: true, fulfillmentMode: true,
+      totalCents: true, paidAt: true, updatedAt: true,
+      demand: { select: { city: true, customerName: true, offers: { where: { status: "ACCEPTED" }, select: { seller: { select: { businessName: true } } }, take: 1 } } },
+      refunds: { orderBy: { createdAt: "desc" }, select: { id: true, stripeRefundId: true, amountCents: true, status: true, reason: true, createdAt: true } },
+      disputes: { orderBy: { updatedAt: "desc" }, select: { id: true, stripeDisputeId: true, status: true, amountCents: true, currency: true, reason: true, updatedAt: true } },
+    },
+  });
+  const initialPaymentOrders = paymentOrders.map(order => ({
+    ...order,
+    paidAt: order.paidAt?.toISOString() ?? null,
+    updatedAt: order.updatedAt.toISOString(),
+    refunds: order.refunds.map(refund => ({ ...refund, createdAt: refund.createdAt.toISOString() })),
+    disputes: order.disputes.map(dispute => ({ ...dispute, updatedAt: dispute.updatedAt.toISOString() })),
+  }));
   return <main className="shell" style={{ paddingTop: 42, paddingBottom: 80 }}>
     <header className="topbar" style={{ padding: "0 0 24px" }}>
       <Link className="brand" href="/"><span className="brand-mark"><Store size={19}/></span>FOOD SIGNAL</Link>
@@ -34,6 +52,7 @@ export default async function OperatorPage() {
       <div className="panel"><div className="eyebrow">Commerçants actifs</div><h2 style={{ fontSize: 38, margin: "8px 0" }}>{sellers.length - pending}</h2><p className="subtle">Profil(s) validé(s)</p><CheckCircle2 color="#1e6b4b"/></div>
     </div>
     <DemandDistributionPanel />
+    <OperatorPaymentsDashboard initialOrders={initialPaymentOrders} />
     <div className="section-heading" style={{ marginTop: 30 }}><div><div className="eyebrow">Réseau local</div><h2>Commerçants</h2></div></div>
     <div style={{ display: "grid", gap: 14, marginTop: 24 }}>
       {sellers.map(seller => <article className="panel" key={seller.id}>
