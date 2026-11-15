@@ -16,7 +16,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const { answer } = schema.parse(await request.json());
     const existing = await prisma.demand.findFirst({
       where: { id, customerId: user.id },
-      select: { id: true, rawDescription: true, status: true },
+      select: { id: true, rawDescription: true, status: true, structuredNeed: true },
     });
     if (!existing) return NextResponse.json({ error: "Demande introuvable." }, { status: 404 });
     if (existing.status !== "NEEDS_CLARIFICATION") return NextResponse.json({ error: "Cette demande n'attend plus de précision." }, { status: 409 });
@@ -24,12 +24,19 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const updatedDescription = `${existing.rawDescription}\nPrécision du client : ${answer}`;
     if (updatedDescription.length > 4000) return NextResponse.json({ error: "La demande et sa précision dépassent la taille autorisée." }, { status: 400 });
     const intent = await analyzeFoodIntent(updatedDescription);
+    const previousNeed = existing.structuredNeed && typeof existing.structuredNeed === "object" && !Array.isArray(existing.structuredNeed)
+      ? existing.structuredNeed as Record<string, unknown>
+      : {};
+    const structuredNeed = {
+      ...serializeIntent(intent),
+      ...(previousNeed.context ? { context: previousNeed.context } : {}),
+    };
     const demand = await prisma.demand.update({
       where: { id },
       data: {
         rawDescription: updatedDescription,
         anonymizedBrief: anonymizeDemandText(intent.summary),
-        structuredNeed: serializeIntent(intent),
+        structuredNeed,
         status: intent.isComplete ? "DRAFT" : "NEEDS_CLARIFICATION",
         clarification: intent.clarificationQuestions.length ? intent.clarificationQuestions.join("\n") : null,
       },
