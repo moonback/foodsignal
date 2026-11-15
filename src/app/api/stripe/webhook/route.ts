@@ -19,6 +19,18 @@ function verifyStripeSignature(payload: string, header: string, secret: string) 
   });
 }
 
+type StripeObject = Record<string, unknown>;
+function metadataOrderId(object: StripeObject) {
+  const metadata = object.metadata;
+  if (typeof metadata !== "object" || metadata === null) return null;
+  const id = (metadata as Record<string, unknown>).orderId;
+  return typeof id === "string" ? id : null;
+}
+function stripeDisputeStatus(value: unknown) {
+  const allowed = ["WARNING_NEEDS_RESPONSE", "WARNING_UNDER_REVIEW", "WARNING_CLOSED", "NEEDS_RESPONSE", "UNDER_REVIEW", "WON", "LOST"] as const;
+  return typeof value === "string" && (allowed as readonly string[]).includes(value) ? value : "UNDER_REVIEW";
+}
+
 export async function POST(request: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret) return NextResponse.json({ error: "Webhook Stripe non configuré." }, { status: 503 });
@@ -28,24 +40,57 @@ export async function POST(request: Request) {
   if (!verifyStripeSignature(rawBody, signature, secret)) return NextResponse.json({ error: "Signature Stripe invalide." }, { status: 400 });
 
   try {
-    const event = JSON.parse(rawBody) as { type: string; data?: { object?: Record<string, unknown> } };
-    const session = event.data?.object;
-    if (!session || typeof session.id !== "string") return NextResponse.json({ received: true });
-    const orderId = typeof session.metadata === "object" && session.metadata !== null
-      ? (session.metadata as Record<string, unknown>).orderId
-      : null;
-    if (typeof orderId !== "string") return NextResponse.json({ received: true });
+    const event = JSON.parse(rawBody) as { type: string; data?: { object?: StripeObject } };
+    const object = event.data?.object;
+    if (!object || typeof object.id !== "string") return NextResponse.json({ received: true });
+
+    if (event.type.startsWith("charge.dispute.")) {
+      const paymentIntent = typeof object.payment_intent === "string" ? object.payment_intent : null;
+      if (!paymentIntent) return NextResponse.json({ received: true });
+      const order = await prisma.order.findUnique({ where: { stripePaymentIntentId: paymentIntent }, select: { id: true } });
+      if (!order) return NextResponse.json({ received: true });
+      const status = stripeDisputeStatus(object.status);
+      await prisma.stripeDispute.upsert({
+        where: { stripeDisputeId: object.id },
+        create: {
+          stripeDisputeId: object.id, orderId: order.id, status,
+          amountCents: typeof object.amount === "number" ? object.amount : 0,
+          currency: typeof object.currency === "string" ? object.currency : "eur",
+          reason: typeof object.reason === "string" ? object.reason : "unknown",
+        },
+        update: { status, amountCents: typeof object.amount === "number" ? object.amount : 0, reason: typeof object.reason === "string" ? object.reason : "unknown" },
+      });
+      return NextResponse.json({ received: true });
+    }
+
+    if (event.type === "refund.created" || event.type === "refund.updated" || event.type === "refund.failed") {
+      const orderId = metadataOrderId(object);
+      if (orderId) {
+        const status = object.status === "succeeded" ? "SUCCEEDED" : object.status === "failed" ? "FAILED" : "PENDING";
+        await prisma.paymentRefund.updateMany({
+          where: { orderId, OR: [{ stripeRefundId: object.id }, { stripeRefundId: null }] },
+          data: { stripeRefundId: object.id, status },
+        });
+        if (status === "SUCCEEDED") {
+          await prisma.order.updateMany({ where: { id: orderId, paymentStatus: "PAID" }, data: { paymentStatus: "REFUNDED" } });
+        }
+      }
+      return NextResponse.json({ received: true });
+    }
+
+    const orderId = metadataOrderId(object);
+    if (!orderId) return NextResponse.json({ received: true });
 
     if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
-      if (session.payment_status !== "paid") return NextResponse.json({ received: true });
-      const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : null;
+      if (object.payment_status !== "paid") return NextResponse.json({ received: true });
+      const paymentIntent = typeof object.payment_intent === "string" ? object.payment_intent : null;
       await prisma.order.updateMany({
-        where: { id: orderId, stripeCheckoutSessionId: session.id as string, paymentStatus: "PENDING" },
+        where: { id: orderId, stripeCheckoutSessionId: object.id, paymentStatus: "PENDING" },
         data: { paymentStatus: "PAID", stripePaymentIntentId: paymentIntent, paidAt: new Date() },
       });
     } else if (event.type === "checkout.session.async_payment_failed" || event.type === "checkout.session.expired") {
       await prisma.order.updateMany({
-        where: { id: orderId, stripeCheckoutSessionId: session.id as string, paymentStatus: "PENDING" },
+        where: { id: orderId, stripeCheckoutSessionId: object.id, paymentStatus: "PENDING" },
         data: { paymentStatus: "FAILED" },
       });
     }

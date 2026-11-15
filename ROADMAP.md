@@ -75,7 +75,12 @@
 - [x] Webhook signé pour confirmer, échouer ou expirer un paiement ; le retour navigateur ne valide jamais un paiement.
 - [x] Blocage de la préparation vendeur tant que le paiement n'est pas confirmé.
 - [ ] Tests Stripe en mode test, validation de la configuration Connect France, migration / validation Accounts v2 et revue du modèle de responsabilité avant production.
-- [ ] Gestion des remboursements, litiges, rapprochement comptable et notifications.
+- [x] Endpoint opérateur de remboursement intégral, réservé au rôle OPERATOR et idempotent.
+- [x] Reversal du transfert vendeur et remboursement de la commission plateforme sur remboursement volontaire.
+- [x] Persistance des événements de litige Stripe liés au PaymentIntent.
+- [ ] Interface opérateur de remboursement et de traitement des litiges.
+- [ ] Gestion des remboursements partiels, collecte de preuves et soumission des réponses aux litiges.
+- [ ] Notifications et rapprochement comptable des remboursements / reversals.
 
 ## Lot 6 — Qualité et pilote terrain
 

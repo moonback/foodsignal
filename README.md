@@ -111,6 +111,7 @@ Consulter [ROADMAP.md](./ROADMAP.md) pour le détail des lots. Les objectifs com
 - Le commerçant ne peut faire évoluer que les commandes associées à sa proposition acceptée.
 - Les transitions autorisées sont : confirmée → préparation → prête au retrait → terminée, ou confirmée → préparation → en livraison → terminée.
 - Le paiement Stripe est activable uniquement avec des clés, un webhook et un taux de commission explicitement configurés. Les paiements de test doivent être utilisés avant toute activation réelle.
+- Les remboursements intégraux sont réservés à l'opérateur et demandent la reversal du transfert vendeur ainsi que le remboursement de la commission ; les litiges sont enregistrés pour suivi, sans traitement automatique.
 - Le vendeur connecte son compte Stripe Express depuis son tableau de bord ; l'état des capacités de transfert et de versement est relu auprès de Stripe.
 - Le client est redirigé vers Stripe Checkout. Le retour navigateur ne valide jamais un paiement : seul le webhook signé met la commande à l'état payé.
 - Les commandes non payées ne peuvent pas passer en préparation. Les sessions expirées ou échouées peuvent être retentées.
@@ -119,3 +120,11 @@ Consulter [ROADMAP.md](./ROADMAP.md) pour le détail des lots. Les objectifs com
 ## Vérification technique
 
 Les fichiers ont été ajoutés via l'API GitHub. Les dépendances, Prisma Client, migrations, lint, typecheck, tests et build n'ont pas été exécutés dans cet environnement. Ne pas considérer le lot comme validé pour la production avant exécution locale de ces contrôles.
+
+
+## Remboursements et litiges Stripe
+
+- L'endpoint opérateur `POST /api/operator/orders/:id/refund` permet un remboursement intégral des commandes payées, avec motif obligatoire et clé d'idempotence.
+- Le remboursement Stripe demande également la reversal du transfert vendeur et le remboursement de la commission plateforme.
+- Les événements de litige Stripe sont persistés dans `StripeDispute` pour suivi ; aucune réponse ou reversal de litige n'est automatisée.
+- Ce lot ne couvre pas les remboursements partiels, l'interface opérateur, les notifications ni le rapprochement comptable. Consulter [la procédure Stripe](./docs/operations/stripe-refunds-disputes.md).
