@@ -4,6 +4,7 @@ import { CheckCircle2, Clock3, MapPin, Package, Store, XCircle } from "lucide-re
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import SellerReviewActions from "./seller-review-actions";
+import DemandDistributionPanel from "./demand-distribution-panel";
 
 export default async function OperatorPage() {
   const user = await getCurrentUser();
@@ -32,6 +33,8 @@ export default async function OperatorPage() {
       <div className="panel"><div className="eyebrow">En attente</div><h2 style={{ fontSize: 38, margin: "8px 0" }}>{pending}</h2><p className="subtle">Profil(s) à examiner</p><Clock3 color="#b7791f"/></div>
       <div className="panel"><div className="eyebrow">Commerçants actifs</div><h2 style={{ fontSize: 38, margin: "8px 0" }}>{sellers.length - pending}</h2><p className="subtle">Profil(s) validé(s)</p><CheckCircle2 color="#1e6b4b"/></div>
     </div>
+    <DemandDistributionPanel />
+    <div className="section-heading" style={{ marginTop: 30 }}><div><div className="eyebrow">Réseau local</div><h2>Commerçants</h2></div></div>
     <div style={{ display: "grid", gap: 14, marginTop: 24 }}>
       {sellers.map(seller => <article className="panel" key={seller.id}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
