@@ -77,7 +77,7 @@ Ouvrir `http://localhost:3000`.
 - Les routes d'administration exigent le rôle OPERATOR côté serveur.
 - Classement déterministe des vendeurs actifs de la même ville : adéquation des spécialités (50 points), présence de produits du catalogue (35 points) et indice budgétaire (15 points).
 - Diffusion opérateur aux 10 meilleurs candidats dépassant le seuil de 25/100 ; les motifs et scores sont visibles avant l'envoi.
-- Le budget est un signal indicatif fondé sur le prix d'au moins un produit, pas une estimation du panier complet. Le score ne prouve ni disponibilité réelle, ni capacité de livraison, ni prix final.
+- Le budget est un signal indicatif fondé sur le prix d'au moins un produit pertinent, pas une estimation du panier complet. Le score ne prouve ni disponibilité réelle, ni capacité de livraison, ni prix final.
 - Notifications opérateur pour les remboursements et les litiges Stripe.
 - Les vendeurs ne reçoivent que le résumé anonymisé, la ville, le budget et les modalités, sans les coordonnées client ni la description brute.
 
