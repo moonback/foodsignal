@@ -78,6 +78,7 @@ model User {
   seller       Seller?
   demands      Demand[] @relation("CustomerDemands")
   notifications Notification[]
+  auditLogs     OperatorAuditLog[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -236,4 +237,19 @@ model DemandRecipient {
   createdAt DateTime @default(now())
   @@unique([demandId, sellerId])
   @@index([sellerId, createdAt])
+}
+
+
+model OperatorAuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String
+  details    Json?
+  createdAt  DateTime @default(now())
+  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId, createdAt])
 }
