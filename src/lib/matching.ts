@@ -75,15 +75,21 @@ export function scoreSellerMatch(seller: MatchingSeller, demand: MatchingConstra
   const productPoints = demand.categories.length
     ? Math.round(35 * productMatches.length / demand.categories.length)
     : Math.min(35, productKeywordHits.length * 5);
+  const relevantProducts = availableProducts.filter(product =>
+    demand.categories.some(category =>
+      normalizeMatchingText(product.category) === normalizeMatchingText(category)
+      || CATEGORY_KEYWORDS[category]?.some(keyword => containsKeyword(product.name + " " + product.category, keyword)),
+    ),
+  );
   const budgetPoints = demand.budgetMaxCents == null
     ? 15
-    : (availableProducts.some(product => product.priceCents <= demand.budgetMaxCents!) ? 15 : 0);
+    : (relevantProducts.some(product => product.priceCents <= demand.budgetMaxCents!) ? 15 : 0);
   const score = Math.min(100, specialtyPoints + productPoints + budgetPoints);
   const reasons: string[] = [];
   if (specialtyMatches.length) reasons.push(`Spécialités : ${specialtyMatches.join(", ")}`);
   if (productMatches.length) reasons.push(`Catalogue : ${productMatches.join(", ")}`);
   if (productKeywordHits.length && !productMatches.length) reasons.push("Produits du catalogue proches des termes de la demande");
-  if (demand.budgetMaxCents != null) reasons.push("Présence d'au moins un produit sous le budget (indication, pas un devis complet)");
+  if (demand.budgetMaxCents != null) reasons.push("Présence d'un produit pertinent sous le budget (indication, pas un devis complet)");
   if (!reasons.length) reasons.push("Correspondance faible : vérification opérateur recommandée");
   return {
     sellerId: seller.id,
