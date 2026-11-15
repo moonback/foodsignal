@@ -49,12 +49,12 @@
 - [ ] Moteur AI Intent avec sortie JSON validée par schéma.
 - [ ] Détection des informations manquantes et questions de clarification.
 - [ ] Anonymisation renforcée et tests de non-divulgation.
-- [ ] Matching par spécialité et proximité dans la seule zone pilote.
-- [ ] Notifications et diffusion contrôlée aux vendeurs éligibles.
+- [x] Matching initial par mots-clés, spécialités et ville, avec diffusion manuelle par opérateur.
+- [ ] Matching géographique par rayon et notifications automatiques aux vendeurs éligibles.
 
 ## Lot 4 — Offres et optimisation
 
-- [ ] Soumission d'offres détaillées et validation des données.
+- [x] Soumission d'offres détaillées avec validation Zod et calcul serveur du sous-total.
 - [x] Espace particulier pour consulter ses demandes et comparer les propositions reçues.
 - [ ] Contrôle de conformité avec les contraintes du client.
 - [ ] Comparaison prix / qualité déclarée / disponibilité / logistique.
