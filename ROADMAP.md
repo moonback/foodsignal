@@ -68,14 +68,22 @@
 - [x] Espace client de suivi de commande.
 - [x] Espace vendeur pour faire progresser les statuts de préparation et de remise.
 - [x] Parcours de retrait et de livraison avec adresse obligatoire pour la livraison.
-- [ ] Notifications et suivi des états.
+- [x] Notifications intégrées persistantes : confirmation, paiement, progression commande, remboursement et litige, avec compteur et lecture individuelle / globale.
+- [ ] Notifications e-mail, SMS ou push via fournisseur externe, préférences et consentements.
 - [ ] Livraison par partenaires locaux, après contractualisation.
 - [x] Connexion Stripe Express du commerçant et lecture des capacités de transfert / versement.
 - [x] Checkout Stripe à destination du compte vendeur, avec commission configurable en points de base.
 - [x] Webhook signé pour confirmer, échouer ou expirer un paiement ; le retour navigateur ne valide jamais un paiement.
 - [x] Blocage de la préparation vendeur tant que le paiement n'est pas confirmé.
 - [ ] Tests Stripe en mode test, validation de la configuration Connect France, migration / validation Accounts v2 et revue du modèle de responsabilité avant production.
-- [ ] Gestion des remboursements, litiges, rapprochement comptable et notifications.
+- [x] Endpoint opérateur de remboursement intégral, réservé au rôle OPERATOR et idempotent.
+- [x] Reversal du transfert vendeur et remboursement de la commission plateforme sur remboursement volontaire.
+- [x] Persistance des événements de litige Stripe liés au PaymentIntent.
+- [x] Tableau de bord opérateur des paiements, remboursements et litiges (suivi des 100 dernières commandes, filtres et actualisation).
+- [x] Déclenchement opérateur du remboursement intégral depuis la console, avec motif et confirmation explicite.
+- [ ] Interface de traitement des litiges : collecte de preuves et soumission des réponses à Stripe.
+- [ ] Gestion des remboursements partiels, collecte de preuves et soumission des réponses aux litiges.
+- [ ] Notifications externes et rapprochement comptable des remboursements / reversals.
 
 ## Lot 6 — Qualité et pilote terrain
 
