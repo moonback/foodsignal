@@ -100,12 +100,26 @@ test("accepte une précision séparée si le produit est déjà identifié dans 
   process.env.OPENAI_API_KEY = "test-key";
   global.fetch = async () => fakeResponse({
     summary: "Deux kilogrammes de pommes.",
-    items: [{ name: "Pommes", quantity: 2, unit: "kg", category: "Fruits et légumes", quantityEvidence: "2 kg" }],
+    items: [{ name: "Pommes", quantity: 2, unit: "kg", category: "Fruits et légumes", quantityEvidence: "Pommes : 2 kg" }],
     dietaryConstraints: [],
     preferences: [],
     clarificationQuestions: [],
   });
-  const intent = await analyzeFoodIntent("Je voudrais des pommes.\\nPrécision du client : 2 kg");
+  const intent = await analyzeFoodIntent("Je voudrais des pommes.\\nPrécision du client pour Pommes : 2 kg");
   assert.equal(intent.isComplete, true);
   assert.equal(intent.items[0].quantity, 2);
+});
+
+test("rejette une quantité dont la preuve ne nomme pas le produit", async () => {
+  process.env.OPENAI_API_KEY = "test-key";
+  global.fetch = async () => fakeResponse({
+    summary: "Des pommes pour quatre personnes.",
+    items: [{ name: "Pommes", quantity: 4, unit: null, category: "Fruits et légumes", quantityEvidence: "4" }],
+    dietaryConstraints: [],
+    preferences: [],
+    clarificationQuestions: [],
+  });
+  const intent = await analyzeFoodIntent("Je voudrais des pommes pour 4 personnes.");
+  assert.equal(intent.items[0].quantity, null);
+  assert.equal(intent.isComplete, false);
 });
