@@ -29,22 +29,21 @@ export async function notifyOrderUsers(input: OrderNotification) {
       },
     });
     if (!order) return;
-    const recipientIds = new Set<string>();
-    if (order.demand.customerId) recipientIds.add(order.demand.customerId);
+    const recipients = new Map<string, string>();
+    if (order.demand.customerId) recipients.set(order.demand.customerId, `/commandes/${order.id}`);
     const sellerUserId = order.demand.offers[0]?.seller.userId;
-    if (sellerUserId) recipientIds.add(sellerUserId);
+    if (sellerUserId) recipients.set(sellerUserId, "/vendeur");
     if (input.includeOperators) {
       const operators = await prisma.user.findMany({ where: { role: "OPERATOR" }, select: { id: true } });
-      operators.forEach(operator => recipientIds.add(operator.id));
+      operators.forEach(operator => recipients.set(operator.id, "/operateur"));
     }
-    if (recipientIds.size === 0) return;
+    if (recipients.size === 0) return;
     await prisma.notification.createMany({
-      data: [...recipientIds].map(userId => ({
-        userId,
+      data: [...recipients].map(([userId, href]) => ({
+        userId, href,
         type: input.type,
         title: input.title,
         message: input.message,
-        href: `/commandes/${order.id}`,
         eventKey: input.eventKey,
       })),
       skipDuplicates: true,
