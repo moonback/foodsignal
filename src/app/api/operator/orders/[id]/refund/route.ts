@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { stripeRequest } from "@/lib/stripe";
 import { notifyOrderUsers } from "@/lib/notifications";
+import { writeOperatorAudit } from "@/lib/operator-audit";
 
 const schema = z.object({ reason: z.string().trim().min(10).max(500) });
 type StripeRefund = { id: string; status: string; amount: number };
@@ -49,6 +50,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (result.status === "succeeded") {
       await prisma.order.updateMany({ where: { id: order.id, paymentStatus: "PAID" }, data: { paymentStatus: "REFUNDED" } });
     }
+    await writeOperatorAudit({
+      actorId: user.id,
+      action: "REFUND_REQUESTED",
+      entityType: "ORDER",
+      entityId: order.id,
+      details: { stripeRefundId: result.id, amountCents: result.amount, status: result.status, reason: input.reason },
+    });
     await notifyOrderUsers({
       orderId: order.id, eventKey: `refund-requested-${result.id}`, type: "REFUND_UPDATED",
       title: result.status === "succeeded" ? "Remboursement effectué" : "Remboursement en cours",
