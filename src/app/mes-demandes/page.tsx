@@ -60,7 +60,7 @@ export default async function MyDemandsPage() {
           <span className="pill">{demandLabels[demand.status] || demand.status}</span>
         </div>
         <p style={{ lineHeight: 1.6 }}>{demand.anonymizedBrief}</p>
-        {demand.status === "NEEDS_CLARIFICATION" && <ClarificationForm demandId={demand.id} questions={demand.clarification || "Merci de préciser les quantités et unités souhaitées."}/ >}
+        {demand.status === "NEEDS_CLARIFICATION" && <ClarificationForm demandId={demand.id} questions={demand.clarification || "Merci de préciser les quantités et unités souhaitées."}/>}
         <p className="subtle"><MapPin size={14} style={{ verticalAlign: "middle", marginRight: 5 }}/>{demand.city} · Budget : {demand.budgetMaxCents ? euro(demand.budgetMaxCents) : "libre"} · Réception : {demand.fulfillmentMode === "DELIVERY" ? "Livraison" : demand.fulfillmentMode === "PICKUP" ? "Retrait" : "À convenir"}</p>
         {demand.order && <div className="notice" style={{ marginTop: 14 }}>Une commande est confirmée. <Link href={`/commandes/${demand.order.id}`}>Suivre son avancement</Link></div>}
         <div style={{ borderTop: "1px solid var(--line)", paddingTop: 18, marginTop: 18 }}>
