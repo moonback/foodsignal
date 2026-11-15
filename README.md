@@ -54,6 +54,16 @@ Ouvrir `http://localhost:3000`.
 - Profil de commerce, adresse, ville et spécialités.
 - Profil créé inactif : aucune demande n'est envoyée au professionnel avant validation.
 - Tableau de bord affichant le statut de validation.
+- Catalogue produits : catégorie, unité, prix en centimes, description et disponibilité.
+- Ajout, modification, suppression et bascule de disponibilité ; les opérations sont limitées au vendeur propriétaire.
+
+### Opérateur
+- Console de revue des professionnels inscrits.
+- Activation et suspension des comptes vendeurs.
+- Compteurs de profils en attente et actifs.
+- Les routes d'administration exigent le rôle OPERATOR côté serveur.
+
+Pour attribuer le premier rôle opérateur, créer un compte par le parcours normal puis exécuter manuellement la procédure SQL documentée dans [docs/operations/operator-access.md](./docs/operations/operator-access.md). Aucun endpoint public ne permet l'auto-attribution du rôle opérateur.
 
 ### Sécurité : limites à traiter avant un pilote public
 
