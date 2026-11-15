@@ -79,7 +79,8 @@ export type BasketPlan = {
 };
 
 function unitsMatch(requestedUnit?: string, productUnit?: string) {
-  if (!requestedUnit || !productUnit) return true;
+  if (!requestedUnit) return true;
+  if (!productUnit) return false;
   return normalizeMatchingText(requestedUnit) === normalizeMatchingText(productUnit);
 }
 
@@ -90,12 +91,16 @@ function productMatchesRequestedItem(
   if (!product.isAvailable || !unitsMatch(item.unit, product.unit)) return false;
   const productName = normalizeMatchingText(product.name);
   const itemName = normalizeMatchingText(item.name);
-  const nameMatches = productName === itemName
-    || productName.includes(itemName)
-    || itemName.includes(productName);
-  const categoryMatches = Boolean(item.category)
-    && normalizeMatchingText(product.category) === normalizeMatchingText(item.category!);
-  return nameMatches || categoryMatches;
+  const productTokens = productName.match(/[a-z0-9]+/g) || [];
+  const itemTokens = itemName.match(/[a-z0-9]+/g) || [];
+  const nameMatches = itemTokens.length > 0 && itemTokens.every(token =>
+    productTokens.some(productToken =>
+      productToken === token || productToken.startsWith(token) || token.startsWith(productToken),
+    ),
+  );
+  const categoryMatches = !item.category
+    || normalizeMatchingText(product.category) === normalizeMatchingText(item.category);
+  return nameMatches && categoryMatches;
 }
 
 export function parseRequestedItems(value: unknown): MatchingRequestedItem[] {
