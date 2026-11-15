@@ -30,3 +30,10 @@ RETURNING "id", "email", "role";
 - Conserver une trace des validations et suspensions dans un journal d'audit : ce journal reste à implémenter.
 
 La console actuelle permet l'activation et la suspension. Elle ne réalise pas encore la vérification documentaire ou juridique des établissements.
+
+
+## Journal de traçabilité
+
+Les actions d'activation / suspension d'un vendeur et de diffusion d'une demande créent un enregistrement dans OperatorAuditLog au sein de la même transaction que l'action métier. Les demandes de remboursement Stripe sont également journalisées après l'appel Stripe. La console affiche les 12 événements les plus récents.
+
+Ce journal applicatif est utile au suivi opérationnel, mais un opérateur disposant d'un accès direct à la base pourrait le modifier. Avant la production, prévoir un export externe à accès restreint, une politique de rétention, des alertes et une authentification renforcée (MFA / SSO).
