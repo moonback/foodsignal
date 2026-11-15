@@ -39,18 +39,22 @@
 - [x] Catalogue produits avec catégories, unités, prix et disponibilités.
 - [x] API catalogue protégée par rôle et propriété du vendeur.
 - [ ] Zone desservie, horaires et modalités de réception.
-- [x] Correspondance déterministe ville + spécialités et diffusion opérateur contrôlée.
+- [x] Éligibilité stricte des vendeurs actifs dans la ville de la demande.
+- [x] Classement explicable : spécialités (50 points), catalogue disponible (35 points), indice budgétaire indicatif (15 points).
+- [x] Affichage opérateur des meilleurs scores et de leurs motifs avant diffusion.
+- [x] Diffusion explicite aux 10 meilleurs candidats au-dessus du seuil de 25/100.
 - [x] Boîte de réception vendeur limitée aux données anonymisées.
 - [x] Dépôt d'offres structurées avec calcul du montant côté serveur.
-- [ ] Audit du matching et amélioration de la couverture des mots-clés.
+- [ ] Tests unitaires du scoring, audit de couverture des mots-clés et calibration sur des demandes réelles anonymisées.
 
 ## Lot 3 — Compréhension et diffusion
 
 - [ ] Moteur AI Intent avec sortie JSON validée par schéma.
 - [ ] Détection des informations manquantes et questions de clarification.
 - [ ] Anonymisation renforcée et tests de non-divulgation.
-- [x] Matching initial par mots-clés, spécialités et ville, avec diffusion manuelle par opérateur.
-- [ ] Matching géographique par rayon et notifications automatiques aux vendeurs éligibles.
+- [x] Détection de catégories et classement déterministe des vendeurs par spécialités, catalogue et indice budgétaire, avec scores explicables.
+- [x] Diffusion contrôlée par l'opérateur aux meilleurs candidats (10 maximum, seuil 25/100).
+- [ ] Matching géographique par rayon, prise en compte des capacités de livraison et notifications automatiques aux vendeurs éligibles.
 
 ## Lot 4 — Offres et optimisation
 
