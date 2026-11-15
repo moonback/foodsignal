@@ -38,7 +38,10 @@ Ouvrir `http://localhost:3000`.
 | `OPENAI_MODEL` | Modèle envisagé pour l'analyse du besoin |
 | `PILOT_CITY` | Ville du pilote, à choisir avant le lancement |
 | `PILOT_COUNTRY` | Pays du pilote, `FR` par défaut |
-| `NEXT_PUBLIC_APP_URL` | URL de l'application |
+| `NEXT_PUBLIC_APP_URL` | URL publique de l'application, utilisée pour les retours Stripe |
+| `STRIPE_SECRET_KEY` | Clé secrète Stripe (commencer par une clé de test) |
+| `STRIPE_WEBHOOK_SECRET` | Secret de signature de l'endpoint webhook Stripe |
+| `FOOD_SIGNAL_PLATFORM_FEE_BPS` | Commission explicite en points de base (ex. 500 = 5 %) ; obligatoire pour ouvrir Checkout |
 
 ## Parcours actuellement implémentés
 
@@ -50,6 +53,7 @@ Ouvrir `http://localhost:3000`.
 - Description originale et résumé anonymisé stockés séparément.
 - Historique personnel des demandes et comparaison des propositions reçues.
 - Confirmation d'une proposition et suivi de commande sur `/commandes/[id]`.
+- Paiement via Stripe Checkout, redirection hébergée et statut confirmé uniquement par webhook signé.
 
 ### Professionnel
 - Inscription depuis un compte connecté.
@@ -61,6 +65,8 @@ Ouvrir `http://localhost:3000`.
 - Boîte de réception des demandes qui lui sont attribuées.
 - Dépôt d'offres détaillées avec sous-total calculé côté serveur.
 - Gestion des commandes acceptées : préparation, prêt au retrait ou départ en livraison, puis confirmation de remise.
+- Connexion du compte Stripe Express du commerçant et vérification des capacités de transfert / versement.
+- Le commerçant ne peut démarrer la préparation qu'après confirmation du paiement par webhook Stripe.
 
 ### Opérateur
 - Console de revue des professionnels inscrits.
@@ -104,7 +110,8 @@ Consulter [ROADMAP.md](./ROADMAP.md) pour le détail des lots. Les objectifs com
 - Le montant est recalculé côté serveur à partir de la proposition : produits + préparation, et frais de livraison uniquement si le client choisit la livraison.
 - Le commerçant ne peut faire évoluer que les commandes associées à sa proposition acceptée.
 - Les transitions autorisées sont : confirmée → préparation → prête au retrait → terminée, ou confirmée → préparation → en livraison → terminée.
-- Aucun paiement n'est encaissé et aucune livraison n'est commandée auprès d'un partenaire.
+- Le paiement Stripe est activable uniquement avec des clés, un webhook et un taux de commission explicitement configurés. Les paiements de test doivent être utilisés avant toute activation réelle.
+- Le modèle Checkout utilise des destination charges : FOOD SIGNAL supporte les frais de traitement Stripe et la responsabilité de la plateforme sur les paiements indirects selon la configuration Connect choisie.
 
 ## Vérification technique
 
