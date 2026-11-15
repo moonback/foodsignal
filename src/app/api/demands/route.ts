@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const demandSchema = z.object({
@@ -9,8 +10,6 @@ const demandSchema = z.object({
   budgetEuros: z.number().positive().max(10000).optional(),
   requestedAt: z.string().datetime().optional(),
   fulfillmentMode: z.enum(["PICKUP", "DELIVERY"]).optional(),
-  customerEmail: z.string().trim().email(),
-  customerName: z.string().trim().min(2).max(100),
 });
 
 function anonymize(text: string) {
@@ -21,6 +20,10 @@ function anonymize(text: string) {
 }
 
 export async function POST(request: Request) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Connectez-vous pour enregistrer une demande." }, { status: 401 });
+  if (user.role !== "CUSTOMER") return NextResponse.json({ error: "Seuls les comptes particuliers peuvent créer une demande." }, { status: 403 });
+
   try {
     const body = demandSchema.parse(await request.json());
     const pilotCity = process.env.PILOT_CITY?.trim();
@@ -29,8 +32,9 @@ export async function POST(request: Request) {
     }
     const demand = await prisma.demand.create({
       data: {
-        customerName: body.customerName,
-        customerEmail: body.customerEmail.toLowerCase(),
+        customerId: user.id,
+        customerName: user.name,
+        customerEmail: user.email,
         rawDescription: body.description,
         anonymizedBrief: anonymize(body.description),
         city: body.city,
