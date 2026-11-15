@@ -8,10 +8,7 @@ const ts = require("typescript");
 const sourcePath = path.resolve(__dirname, "../src/lib/matching.ts");
 const source = fs.readFileSync(sourcePath, "utf8");
 const compiled = ts.transpileModule(source, {
-  compilerOptions: {
-    module: ts.ModuleKind.CommonJS,
-    target: ts.ScriptTarget.ES2022,
-  },
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 });
 const matchingModule = new Module(sourcePath, module);
 matchingModule.filename = sourcePath;
@@ -21,8 +18,11 @@ matchingModule._compile(compiled.outputText, sourcePath);
 const {
   normalizeMatchingText,
   inferDemandCategories,
+  parseRequestedItems,
+  estimateSellerBasket,
   scoreSellerMatch,
   rankSellerMatches,
+  planMultiSellerBaskets,
 } = matchingModule.exports;
 
 const demand = {
@@ -30,6 +30,10 @@ const demand = {
   brief: "Je cherche des légumes bio et du pain pour samedi.",
   budgetMaxCents: 3000,
   fulfillmentMode: "PICKUP",
+  requestedItems: [
+    { name: "Panier de légumes bio", quantity: 1, unit: "pièce" },
+    { name: "Pain de campagne", quantity: 1, unit: "pièce" },
+  ],
 };
 
 function seller(id, overrides = {}) {
@@ -37,8 +41,8 @@ function seller(id, overrides = {}) {
     id,
     specialties: ["Fruits et légumes", "Boulangerie"],
     products: [
-      { name: "Panier de légumes bio", category: "Fruits et légumes", priceCents: 2500, isAvailable: true },
-      { name: "Pain de campagne", category: "Boulangerie", priceCents: 500, isAvailable: true },
+      { name: "Panier de légumes bio", category: "Fruits et légumes", unit: "pièce", priceCents: 2500, isAvailable: true },
+      { name: "Pain de campagne", category: "Boulangerie", unit: "pièce", priceCents: 500, isAvailable: true },
     ],
     ...overrides,
   };
@@ -59,28 +63,81 @@ test("ne détecte pas un mot-clé au milieu d'un mot sans rapport", () => {
   assert.deepEqual(inferDemandCategories("Je cherche un cadeau"), []);
 });
 
-test("attribue un score élevé à un vendeur dont spécialités et catalogue correspondent", () => {
+test("lit uniquement les lignes structurées et ignore les quantités invalides", () => {
+  assert.deepEqual(parseRequestedItems({
+    items: [
+      { name: "Tomates", quantity: 2, unit: "kg" },
+      { name: "Pain", quantity: 0 },
+      { name: "", quantity: 1 },
+      null,
+    ],
+  }), [{ name: "Tomates", quantity: 2, unit: "kg" }]);
+});
+
+test("calcule le coût complet des lignes avec les quantités", () => {
+  assert.equal(estimateSellerBasket(seller("seller-a"), demand.requestedItems), 3000);
+});
+
+test("ne calcule pas un panier incomplet ni une unité incompatible", () => {
+  const incomplete = seller("seller-b", {
+    products: [{ name: "Tomates", category: "Fruits et légumes", unit: "kg", priceCents: 400, isAvailable: true }],
+  });
+  assert.equal(estimateSellerBasket(incomplete, [{ name: "Tomates", quantity: 2, unit: "pièce" }]), null);
+  assert.equal(estimateSellerBasket(incomplete, [{ name: "Pain", quantity: 1, unit: "kg" }]), null);
+});
+
+test("attribue un score de 100 si le panier complet est sous le budget", () => {
   const result = scoreSellerMatch(seller("seller-a"), demand);
   assert.equal(result.score, 100);
+  assert.equal(result.estimatedBasketCents, 3000);
   assert.deepEqual(result.matchedCategories, ["Fruits et légumes", "Boulangerie"]);
-  assert.equal(result.availableProducts, 2);
 });
 
-test("exclut les produits indisponibles du score catalogue", () => {
-  const result = scoreSellerMatch(seller("seller-b", {
-    specialties: [],
-    products: [{ name: "Panier de légumes", category: "Fruits et légumes", priceCents: 1000, isAvailable: false }],
-  }), demand);
-  assert.equal(result.availableProducts, 0);
-  assert.equal(result.matchedCategories.length, 0);
-});
-
-test("n'accorde pas le signal budget si aucun produit pertinent n'est sous le budget", () => {
+test("n'accorde aucun point budget si le panier complet dépasse le budget", () => {
   const result = scoreSellerMatch(seller("seller-c", {
-    products: [{ name: "Panier de légumes", category: "Fruits et légumes", priceCents: 5000, isAvailable: true }],
-  }), { ...demand, categories: ["Fruits et légumes"] });
-  assert.equal(result.reasons.some(reason => reason.includes("Aucun produit pertinent")), true);
-  assert.equal(result.score, 50 + 35);
+    products: [{ name: "Panier de légumes bio", category: "Fruits et légumes", unit: "pièce", priceCents: 5000, isAvailable: true }],
+  }), {
+    ...demand,
+    categories: ["Fruits et légumes"],
+    requestedItems: [{ name: "Panier de légumes bio", quantity: 1, unit: "pièce" }],
+  });
+  assert.equal(result.estimatedBasketCents, 5000);
+  assert.equal(result.reasons.some(reason => reason.includes("au-dessus du budget")), true);
+  assert.equal(result.score, 85);
+});
+
+test("ne note pas artificiellement le budget si les quantités ne sont pas structurées", () => {
+  const result = scoreSellerMatch(seller("seller-no-need"), { ...demand, requestedItems: [] });
+  assert.equal(result.estimatedBasketCents, null);
+  assert.equal(result.score, 85);
+  assert.equal(result.reasons.some(reason => reason.includes("Budget non noté")), true);
+});
+
+test("construit une combinaison multi-vendeurs complète et minimise le sous-total", () => {
+  const sellers = [
+    seller("seller-fruits", {
+      specialties: ["Fruits et légumes"],
+      products: [{ name: "Tomates", category: "Fruits et légumes", unit: "kg", priceCents: 300, isAvailable: true }],
+    }),
+    seller("seller-bread", {
+      specialties: ["Boulangerie"],
+      products: [{ name: "Pain", category: "Boulangerie", unit: "pièce", priceCents: 180, isAvailable: true }],
+    }),
+    seller("seller-expensive", {
+      products: [
+        { name: "Tomates", category: "Fruits et légumes", unit: "kg", priceCents: 500, isAvailable: true },
+        { name: "Pain", category: "Boulangerie", unit: "pièce", priceCents: 250, isAvailable: true },
+      ],
+    }),
+  ];
+  const plans = planMultiSellerBaskets(sellers, [
+    { name: "Tomates", quantity: 2, unit: "kg", category: "Fruits et légumes" },
+    { name: "Pain", quantity: 1, unit: "pièce", category: "Boulangerie" },
+  ], 2, 5);
+  assert.ok(plans.length > 0);
+  assert.equal(plans[0].estimatedSubtotalCents, 780);
+  assert.deepEqual(plans[0].sellerIds, ["seller-bread", "seller-fruits"]);
+  assert.equal(plans[0].allocations.length, 2);
 });
 
 test("classe par score décroissant puis identifiant et limite à dix vendeurs", () => {
