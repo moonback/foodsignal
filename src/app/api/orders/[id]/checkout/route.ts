@@ -15,7 +15,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     const order = await prisma.order.findFirst({
       where: { id, demand: { customerId: user.id } },
       select: {
-        id: true, totalCents: true, status: true, paymentStatus: true, stripeCheckoutSessionId: true,
+        id: true, totalCents: true, status: true, paymentStatus: true, stripeCheckoutSessionId: true, paymentAttempt: true,
         demand: { select: { offers: { where: { status: "ACCEPTED" }, select: {
           seller: { select: { businessName: true, stripeAccountId: true, stripeTransfersEnabled: true, stripePayoutsEnabled: true } },
         } } } },
@@ -33,7 +33,16 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     if (order.stripeCheckoutSessionId) {
       const existing = await stripeRequest<CheckoutSession>(`/v1/checkout/sessions/${encodeURIComponent(order.stripeCheckoutSessionId)}`, "GET");
       if (existing.status === "open" && existing.url) return NextResponse.json({ url: existing.url });
-      if (existing.payment_status === "paid") return NextResponse.json({ error: "Paiement en cours de synchronisation. Actualisez la commande." }, { status: 409 });
+      if (existing.payment_status === "paid" || (existing.status === "complete" && order.paymentStatus === "PENDING")) {
+        return NextResponse.json({ error: "Paiement en cours de confirmation. Actualisez la commande dans quelques instants." }, { status: 409 });
+      }
+      if (existing.status === "expired" || order.paymentStatus === "FAILED") {
+        const reset = await prisma.order.updateMany({
+          where: { id: order.id, stripeCheckoutSessionId: order.stripeCheckoutSessionId, paymentStatus: { in: ["PENDING", "FAILED"] } },
+          data: { stripeCheckoutSessionId: null, paymentStatus: "PENDING", paymentAttempt: { increment: 1 } },
+        });
+        if (reset.count !== 1) return NextResponse.json({ error: "Une autre tentative de paiement vient de démarrer. Actualisez la page." }, { status: 409 });
+      }
     }
 
     const fee = platformFeeAmount(order.totalCents);
@@ -54,10 +63,10 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     });
     if (fee > 0) params.set("payment_intent_data[application_fee_amount]", String(fee));
 
-    const session = await stripeRequest<CheckoutSession>("/v1/checkout/sessions", "POST", params, `foodsignal_order_checkout_${order.id}`);
+    const session = await stripeRequest<CheckoutSession>("/v1/checkout/sessions", "POST", params, `foodsignal_order_checkout_${order.id}_${order.paymentAttempt + (order.stripeCheckoutSessionId ? 1 : 0)}`);
     if (!session.url) return NextResponse.json({ error: "Stripe n'a pas retourné d'URL de paiement." }, { status: 502 });
     await prisma.order.updateMany({
-      where: { id: order.id, paymentStatus: "PENDING" },
+      where: { id: order.id, paymentStatus: "PENDING", stripeCheckoutSessionId: null },
       data: { stripeCheckoutSessionId: session.id },
     });
     return NextResponse.json({ url: session.url });
