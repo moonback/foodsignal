@@ -51,8 +51,10 @@
 
 ## Lot 3 — Compréhension et diffusion
 
-- [ ] Moteur AI Intent avec sortie JSON validée par schéma.
-- [ ] Détection des informations manquantes et questions de clarification.
+- [x] Moteur AI Intent OpenAI côté serveur avec sortie JSON validée par Zod et contexte structuré.
+- [x] Détection des quantités / unités manquantes, preuve textuelle des quantités et questions de clarification ; aucune conversion du nombre de convives en quantité.
+- [x] Parcours client de réponse et réanalyse avant entrée dans la file opérateur.
+- [ ] Évaluer l'extraction sur un corpus réel anonymisé et mesurer les erreurs / demandes de clarification.
 - [ ] Anonymisation renforcée et tests de non-divulgation.
 - [x] Détection de catégories et classement déterministe des vendeurs par spécialités, catalogue et indice budgétaire, avec scores explicables.
 - [x] Diffusion contrôlée par l'opérateur aux meilleurs candidats (10 maximum, seuil 25/100).
@@ -94,8 +96,11 @@
 
 ## Lot 6 — Qualité et pilote terrain
 
-- [ ] Tests unitaires, intégration et E2E.
-- [ ] Audit sécurité, accessibilité et responsive.
+- [x] Suite de tests unitaires ajoutée pour AI Intent (quantité manquante, unité manquante, preuve textuelle, nombre de convives) et matching fractionnaire ; exécution locale encore requise.
+- [ ] Tests d'intégration API et E2E.
+- [x] Console opérateur enrichie avec KPIs marketplace, répartition des demandes et journal des actions administratives.
+- [x] Journal applicatif des activations / suspensions, diffusions et demandes de remboursement.
+- [ ] Audit sécurité, accessibilité et responsive ; journal externe inviolable et MFA opérateur restent à traiter.
 - [ ] Monitoring, sauvegardes et procédure de restauration.
 - [ ] Choix documenté de la ville pilote et recrutement des premiers vendeurs.
 - [ ] Mesure des demandes, taux de réponse, propositions conformes, confirmations et commandes exécutées.

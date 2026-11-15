@@ -27,10 +27,22 @@ export async function PATCH(request: Request) {
 
   try {
     const input = z.object({ sellerId: z.string().min(1), isActive: z.boolean() }).parse(await request.json());
-    const seller = await prisma.seller.update({
-      where: { id: input.sellerId },
-      data: { isActive: input.isActive },
-      select: { id: true, businessName: true, isActive: true },
+    const seller = await prisma.$transaction(async transaction => {
+      const updated = await transaction.seller.update({
+        where: { id: input.sellerId },
+        data: { isActive: input.isActive },
+        select: { id: true, businessName: true, isActive: true },
+      });
+      await transaction.operatorAuditLog.create({
+        data: {
+          actorId: user.id,
+          action: input.isActive ? "SELLER_ACTIVATED" : "SELLER_SUSPENDED",
+          entityType: "SELLER",
+          entityId: updated.id,
+          details: { businessName: updated.businessName, isActive: updated.isActive },
+        },
+      });
+      return updated;
     });
     return NextResponse.json({ seller });
   } catch (error) {

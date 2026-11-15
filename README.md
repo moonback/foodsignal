@@ -4,7 +4,7 @@ FOOD SIGNAL est une marketplace alimentaire inversée : le particulier exprime s
 
 ## État du dépôt
 
-Le dépôt contient un parcours MVP partiel : comptes, espaces opérateur et commerçant, catalogue, diffusion opérateur des demandes avec classement explicable des vendeurs, propositions commerciales, confirmation de commande et suivi de retrait / livraison. **Ce n'est pas encore prêt pour un lancement public** : le paiement est intégré en mode configurable mais non validé en conditions Stripe, les notifications e-mail / push, l'analyse IA, le matching géographique avancé, les contrôles de sécurité complémentaires et les tests restent à traiter.
+Le dépôt contient un parcours MVP partiel : comptes, espaces opérateur et commerçant, catalogue, diffusion opérateur des demandes avec classement explicable des vendeurs, propositions commerciales, confirmation de commande et suivi de retrait / livraison. **Ce n'est pas encore prêt pour un lancement public** : AI Intent est désormais intégré derrière une clé OpenAI serveur mais doit être validé sur un corpus réel, le paiement n'est pas validé en conditions Stripe, les notifications e-mail / push, le matching géographique avancé, les contrôles de sécurité complémentaires et les tests restent à traiter.
 
 ## Stack
 
@@ -34,7 +34,7 @@ Ouvrir `http://localhost:3000`.
 |---|---|
 | `DATABASE_URL` | Connexion PostgreSQL requise |
 | `AUTH_SECRET` | Secret serveur de signature des sessions, 32 caractères minimum ; ne jamais le publier |
-| `OPENAI_API_KEY` | Réservée à l'intégration IA à venir ; aucune analyse IA n'est active |
+| `OPENAI_API_KEY` | Clé API OpenAI côté serveur, nécessaire à l'analyse AI Intent des nouvelles demandes |
 | `OPENAI_MODEL` | Modèle envisagé pour l'analyse du besoin |
 | `PILOT_CITY` | Ville du pilote, à choisir avant le lancement |
 | `PILOT_COUNTRY` | Pays du pilote, `FR` par défaut |
@@ -75,6 +75,8 @@ Ouvrir `http://localhost:3000`.
 - Activation et suspension des comptes vendeurs.
 - Compteurs de profils en attente et actifs.
 - Les routes d'administration exigent le rôle OPERATOR côté serveur.
+- La console /operateur présente les indicateurs de demandes, vendeurs actifs, offres en attente, commandes et paiements, la répartition des demandes par statut et les 12 dernières actions tracées.
+- Les activations / suspensions de vendeurs et les diffusions de demandes sont inscrites dans OperatorAuditLog ; les demandes de remboursement Stripe y sont également tracées. Les changements de statut vendeur et leur trace sont transactionnels.
 - Classement déterministe des vendeurs actifs de la même ville : adéquation des spécialités (50 points), présence de produits disponibles du catalogue (35 points) et coût du panier structuré (15 points). Sans lignes et quantités structurées, aucun point budgétaire n'est attribué.
 - Diffusion opérateur aux 10 meilleurs candidats dépassant le seuil de 25/100 ; les motifs et scores sont visibles avant l'envoi.
 - Le coût du panier vendeur est estimé à partir des lignes structurées, des quantités, des unités compatibles et des prix catalogue disponibles. Un panier incomplet n'est pas présenté comme chiffré. Les frais de préparation et de livraison ne sont pas inclus. Le score ne prouve ni disponibilité réelle à la date demandée, ni capacité logistique, ni prix final.
@@ -124,7 +126,7 @@ Consulter [ROADMAP.md](./ROADMAP.md) pour le détail des lots. Les objectifs com
 
 ## Vérification technique
 
-Les fichiers ont été ajoutés via l'API GitHub. Un script `npm test` et une suite de tests unitaires du matching (`tests/matching.test.cjs`) sont maintenant présents. Ils n'ont toutefois pas été exécutés dans cet environnement. Les dépendances, Prisma Client, migrations, lint, typecheck et build n'ont pas non plus été exécutés. Ne pas considérer le lot comme validé pour la production avant exécution locale de ces contrôles.
+Les fichiers ont été ajoutés via l'API GitHub. `npm test` lance les suites `tests/matching.test.cjs` et `tests/ai-intent.test.cjs`, couvrant le matching, les quantités fractionnaires, les preuves textuelles, les unités manquantes et les clarifications. Ces tests n'ont toutefois pas été exécutés dans cet environnement. Les dépendances, Prisma Client, migrations, lint, typecheck et build n'ont pas non plus été exécutés. Ne pas considérer le lot comme validé pour la production avant exécution locale de ces contrôles.
 
 
 ## Remboursements et litiges Stripe
@@ -161,3 +163,18 @@ Lorsque l'analyse structurée d'une demande fournit des lignes `items` avec un n
 Le moteur propose également jusqu'à cinq combinaisons couvrant toutes les lignes avec au plus trois vendeurs parmi les dix premiers candidats interrogés. Chaque ligne est affectée au produit compatible le moins cher de la combinaison ; les résultats sont triés par sous-total produits, puis par nombre de vendeurs. Ces montants sont des estimations hors frais de préparation et de livraison, et ne constituent pas des offres confirmées.
 
 À ce stade, `structuredNeed.items` doit être alimenté par le futur moteur d'analyse / clarification. Les demandes existantes qui ne possèdent pas ces lignes structurées continuent d'être classées sur les spécialités et le catalogue, sans bonus budgétaire trompeur. La planification multi-vendeurs est exposée à la console opérateur par l'API, mais n'est pas encore proposée comme commande client.
+
+
+## AI Intent — compréhension et clarification des demandes
+
+Les nouvelles demandes passent par src/lib/ai-intent.ts, qui appelle le modèle configuré par OPENAI_MODEL (par défaut gpt-4.1-mini) via l'API OpenAI côté serveur. OPENAI_API_KEY est obligatoire ; sans cette clé, l'API répond explicitement 503 et ne stocke pas de demande partiellement analysée.
+
+La sortie est validée avec Zod et stockée dans Demand.structuredNeed : résumé, lignes produits, quantités, unités, catégories, contraintes alimentaires et préférences. Les quantités doivent être accompagnées d'une citation exacte du texte source. Le serveur vérifie cette preuve, rejette les quantités non justifiées et refuse d'interpréter le nombre de convives comme une quantité de produits. Les unités sont également vérifiées dans le texte source. Les quantités fractionnaires (par exemple 1,5 kg) sont acceptées et les montants de lignes sont arrondis au centime.
+
+Si un produit, une quantité ou une unité manque, le statut devient NEEDS_CLARIFICATION. Le client répond depuis /mes-demandes ; la demande est réanalysée et ne passe en DRAFT (file de vérification opérateur) qu'une fois les informations nécessaires complétées. Aucune diffusion vendeur n'a lieu pendant la clarification. Le budget, la date souhaitée, la ville et le mode de réception saisis séparément sont conservés comme contexte structuré.
+
+Le modèle peut encore mal classer un produit ou une contrainte : l'opérateur conserve la vérification avant diffusion. L'extraction IA n'est pas une validation de stock, de prix final ou de capacité logistique. Les textes originaux restent privés ; seul le résumé anonymisé et les données nécessaires au matching sont exposés aux vendeurs.
+
+## Administration et traçabilité
+
+La console /operateur inclut des indicateurs de volume de demandes, de statut, de vendeurs actifs, d'offres soumises, de commandes et de montants payés. Elle présente aussi les actions récentes dans le journal OperatorAuditLog. Le journal couvre l'activation / suspension des vendeurs, la diffusion des demandes et les demandes de remboursement. Il s'agit d'une trace applicative en base, pas d'un stockage inviolable ou externe ; les accès administrateurs et la journalisation de sécurité restent à renforcer avant production.

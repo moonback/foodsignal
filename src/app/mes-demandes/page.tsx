@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ArrowLeft, Clock3, MapPin, Package, Store } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import OrderSelection from "./order-selection";
+import ClarificationForm from "./clarification-form";
 import { prisma } from "@/lib/prisma";
 
 const demandLabels: Record<string, string> = {
@@ -29,7 +30,7 @@ export default async function MyDemandsPage() {
     where: { customerId: user.id },
     orderBy: { createdAt: "desc" },
     select: {
-      id: true, anonymizedBrief: true, city: true, budgetMaxCents: true,
+      id: true, anonymizedBrief: true, city: true, budgetMaxCents: true, clarification: true,
       status: true, createdAt: true, requestedAt: true, fulfillmentMode: true,
       order: { select: { id: true, status: true } },
       offers: {
@@ -59,7 +60,8 @@ export default async function MyDemandsPage() {
           <span className="pill">{demandLabels[demand.status] || demand.status}</span>
         </div>
         <p style={{ lineHeight: 1.6 }}>{demand.anonymizedBrief}</p>
-        <p className="subtle"><MapPin size={14} style={{ verticalAlign: "middle", marginRight: 5 }}/>{demand.city} · Budget : {demand.budgetMaxCents ? euro(demand.budgetMaxCents) : "libre"} · Réception : {demand.fulfillmentMode === "DELIVERY" ? "Livraison" : demand.fulfillmentMode === "PICKUP" ? "Retrait" : "À convenir"}</p>
+        {demand.status === "NEEDS_CLARIFICATION" && <ClarificationForm demandId={demand.id} questions={demand.clarification || "Merci de préciser les quantités et unités souhaitées."}/>}
+        <p className="subtle"><MapPin size={14} style={{ verticalAlign: "middle", marginRight: 5 }}/>{demand.city} · Budget : {demand.budgetMaxCents ? euro(demand.budgetMaxCents) : "libre"} · Réception : {demand.fulfillmentMode === "DELIVERY" ? "Livraison" : demand.fulfillmentMode === "PICKUP" ? "Retrait" : "À convenir"}{demand.requestedAt ? ` · Date : ${demand.requestedAt.toLocaleDateString("fr-FR")}` : ""}</p>
         {demand.order && <div className="notice" style={{ marginTop: 14 }}>Une commande est confirmée. <Link href={`/commandes/${demand.order.id}`}>Suivre son avancement</Link></div>}
         <div style={{ borderTop: "1px solid var(--line)", paddingTop: 18, marginTop: 18 }}>
           <div className="section-heading"><div><div className="eyebrow">Réponses des professionnels</div><h3>{demand.offers.length} proposition(s)</h3></div></div>

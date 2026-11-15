@@ -159,3 +159,22 @@ test("écarte les vendeurs sous le seuil de 25 points", () => {
   ], { ...demand, budgetMaxCents: 100 });
   assert.deepEqual(ranked, []);
 });
+
+test("accepte les quantités fractionnaires pour les unités au poids", () => {
+  const stock = seller("seller-weight", {
+    products: [{ name: "Pommes", category: "Fruits et légumes", unit: "kg", priceCents: 300, isAvailable: true }],
+  });
+  const parsed = parseRequestedItems({ items: [{ name: "Pommes", quantity: 1.5, unit: "kg" }] });
+  assert.equal(parsed.length, 1);
+  assert.equal(estimateSellerBasket(stock, parsed), 450);
+});
+
+test("ne donne pas de points budget sans panier complet même si aucun budget n'est défini", () => {
+  const result = scoreSellerMatch(seller("seller-unpriced"), {
+    ...demand,
+    budgetMaxCents: null,
+    requestedItems: [],
+  });
+  assert.equal(result.estimatedBasketCents, null);
+  assert.equal(result.score, 85);
+});

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { inferDemandCategories, parseRequestedItems, planMultiSellerBaskets, rankSellerMatches } from "@/lib/matching";
 import { prisma } from "@/lib/prisma";
+import { writeOperatorAudit } from "@/lib/operator-audit";
 
 const demandSelect = {
   id: true, status: true, city: true, anonymizedBrief: true,
@@ -96,6 +97,15 @@ export async function POST(request: Request) {
         skipDuplicates: true,
       }),
       prisma.demand.update({ where: { id: demandId }, data: { status: "COLLECTING_OFFERS" } }),
+      prisma.operatorAuditLog.create({
+        data: {
+          actorId: user.id,
+          action: "DEMAND_DISTRIBUTED",
+          entityType: "DEMAND",
+          entityId: demandId,
+          details: { matchedSellers: matches.length, categories },
+        },
+      }),
     ]);
     return NextResponse.json({
       published: true, matchedSellers: matches.length, categories,
