@@ -23,6 +23,10 @@ function anonymize(text: string) {
 export async function POST(request: Request) {
   try {
     const body = demandSchema.parse(await request.json());
+    const pilotCity = process.env.PILOT_CITY?.trim();
+    if (pilotCity && body.city.localeCompare(pilotCity, "fr", { sensitivity: "base" }) !== 0) {
+      return NextResponse.json({ error: `Le pilote est actuellement limité à ${pilotCity}.` }, { status: 400 });
+    }
     const demand = await prisma.demand.create({
       data: {
         customerName: body.customerName,
