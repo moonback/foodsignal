@@ -153,6 +153,7 @@ model Order {
   totalCents      Int
   paymentStatus   PaymentStatus @default(PENDING)
   stripeCheckoutSessionId String? @unique
+  paymentAttempt  Int          @default(0)
   stripePaymentIntentId String? @unique
   paidAt          DateTime?
   confirmedAt     DateTime     @default(now())
