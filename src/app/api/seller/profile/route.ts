@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentUser } from "@/lib/auth";
+import { createSession, getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
@@ -53,6 +53,7 @@ export async function POST(request: Request) {
       return created;
     });
 
+    await createSession({ ...user, role: "SELLER" });
     return NextResponse.json({ seller, message: "Profil créé. Il sera activé après vérification." }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: "Vérifiez les informations du commerce.", details: error.issues }, { status: 400 });
