@@ -40,12 +40,32 @@ enum OrderStatus {
   COMPLETED
   CANCELLED
 }
-
 enum PaymentStatus {
   PENDING
   PAID
   FAILED
   REFUNDED
+}
+enum PaymentRefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+enum StripeDisputeStatus {
+  WARNING_NEEDS_RESPONSE
+  WARNING_UNDER_REVIEW
+  WARNING_CLOSED
+  NEEDS_RESPONSE
+  UNDER_REVIEW
+  WON
+  LOST
+}
+enum NotificationType {
+  ORDER_CONFIRMED
+  PAYMENT_RECEIVED
+  ORDER_STATUS_CHANGED
+  REFUND_UPDATED
+  DISPUTE_OPENED
 }
 
 model User {
@@ -57,6 +77,7 @@ model User {
   role         UserRole @default(CUSTOMER)
   seller       Seller?
   demands      Demand[] @relation("CustomerDemands")
+  notifications Notification[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -72,7 +93,7 @@ model Seller {
   city        String
   postalCode  String
   latitude    Float?
-  longitude   Float?
+  longitude  Float?
   isActive    Boolean  @default(false)
   stripeAccountId String? @unique
   stripeChargesEnabled Boolean @default(false)
@@ -156,8 +177,54 @@ model Order {
   paymentAttempt  Int          @default(0)
   stripePaymentIntentId String? @unique
   paidAt          DateTime?
+  refunds         PaymentRefund[]
+  disputes        StripeDispute[]
   confirmedAt     DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
+}
+
+model Notification {
+  id        String @id @default(cuid())
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  href      String
+  eventKey  String
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+  @@unique([userId, eventKey])
+  @@index([userId, readAt, createdAt])
+}
+
+model PaymentRefund {
+  id             String @id @default(cuid())
+  orderId        String
+  order          Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  stripeRefundId String? @unique
+  idempotencyKey String @unique
+  amountCents    Int
+  status         PaymentRefundStatus @default(PENDING)
+  reason         String
+  requestedById  String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  @@index([orderId, status])
+}
+
+model StripeDispute {
+  id              String @id @default(cuid())
+  stripeDisputeId String @unique
+  orderId         String
+  order           Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status          StripeDisputeStatus
+  amountCents     Int
+  currency        String
+  reason          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@index([orderId, status])
 }
 
 model DemandRecipient {

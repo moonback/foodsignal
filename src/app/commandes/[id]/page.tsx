@@ -4,6 +4,7 @@ import { ArrowLeft, CheckCircle2, Clock3, MapPin, Package, Store } from "lucide-
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import OrderPayment from "./order-payment";
+import NotificationCenter from "@/components/notification-center";
 
 const labels: Record<string, string> = {
   CONFIRMED: "Commande confirmée",
@@ -40,7 +41,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
   const offer = order.demand.offers[0];
   const items = offer && Array.isArray(offer.items) ? offer.items : [];
   return <main className="shell" style={{ paddingTop: 42, paddingBottom: 80 }}>
-    <header className="topbar" style={{ padding: "0 0 24px" }}><Link className="brand" href="/"><span className="brand-mark"><Package size={19}/></span>FOOD SIGNAL</Link><Link className="secondary" href="/mes-demandes"><ArrowLeft size={14} style={{ verticalAlign: "middle", marginRight: 6 }}/>Mes demandes</Link></header>
+    <header className="topbar" style={{ padding: "0 0 24px" }}><Link className="brand" href="/"><span className="brand-mark"><Package size={19}/></span>FOOD SIGNAL</Link><div style={{ display: "flex", alignItems: "center", gap: 10 }}><NotificationCenter/><Link className="secondary" href="/mes-demandes"><ArrowLeft size={14} style={{ verticalAlign: "middle", marginRight: 6 }}/>Mes demandes</Link></div></header>
     <div className="eyebrow">Suivi de commande</div>
     <h1 style={{ fontSize: "clamp(2rem,5vw,3rem)" }}>Votre commande</h1>
     <section className="panel" style={{ marginTop: 24 }}>
