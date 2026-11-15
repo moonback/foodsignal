@@ -38,9 +38,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     if (updatedDescription.length > 4000) return NextResponse.json({ error: "La demande et sa précision dépassent la taille autorisée." }, { status: 400 });
 
     const intent = await analyzeFoodIntent(updatedDescription);
+    const previousContext = previousNeed.context && typeof previousNeed.context === "object" && !Array.isArray(previousNeed.context)
+      ? previousNeed.context as Record<string, string | number | boolean | null>
+      : null;
     const structuredNeed = {
       ...serializeIntent(intent),
-      ...(previousNeed.context ? { context: previousNeed.context } : {}),
+      ...(previousContext ? { context: previousContext } : {}),
     };
     const demand = await prisma.demand.update({
       where: { id },
