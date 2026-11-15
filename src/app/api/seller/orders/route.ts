@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { notifyOrderUsers } from "@/lib/notifications";
 
 const schema = z.object({
   orderId: z.string().min(1),
@@ -44,6 +45,17 @@ export async function PATCH(request: Request) {
     const updated = await prisma.order.findUnique({
       where: { id: order.id },
       select: { id: true, status: true, updatedAt: true },
+    });
+    const statusMessages: Record<string, { title: string; message: string }> = {
+      PREPARING: { title: "Préparation commencée", message: "Le commerçant prépare votre commande." },
+      READY: { title: "Commande prête", message: "Votre commande est prête à être retirée." },
+      OUT_FOR_DELIVERY: { title: "Commande expédiée", message: "Votre commande est en route." },
+      COMPLETED: { title: "Commande terminée", message: "La remise de votre commande est confirmée." },
+    };
+    const notification = statusMessages[input.status];
+    if (notification) await notifyOrderUsers({
+      orderId: order.id, eventKey: `order-status-${input.status.toLowerCase()}`,
+      type: "ORDER_STATUS_CHANGED", ...notification,
     });
     return NextResponse.json({ order: updated });
   } catch (error) {
