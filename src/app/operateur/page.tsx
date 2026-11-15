@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Activity, CheckCircle2, CreditCard, MapPin, Package, Send, Store } from "lucide-react";
+import { Activity, CheckCircle2, Clock3, CreditCard, MapPin, Package, Send, Store } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import SellerReviewActions from "./seller-review-actions";
@@ -35,7 +35,7 @@ export default async function OperatorPage() {
   if (user.role !== "OPERATOR") redirect("/");
 
   const [
-    sellers, demandGroups, orderCount, paidAggregate, pendingOffers,
+    sellers, demandGroups, clarificationDemands, orderCount, paidAggregate, pendingOffers,
     auditLogs, paymentOrders,
   ] = await Promise.all([
     prisma.seller.findMany({
@@ -48,6 +48,12 @@ export default async function OperatorPage() {
       },
     }),
     prisma.demand.groupBy({ by: ["status"], _count: { _all: true } }),
+    prisma.demand.findMany({
+      where: { status: "NEEDS_CLARIFICATION" },
+      orderBy: { updatedAt: "desc" },
+      take: 6,
+      select: { id: true, city: true, anonymizedBrief: true, clarification: true, updatedAt: true },
+    }),
     prisma.order.count(),
     prisma.order.aggregate({ where: { paymentStatus: "PAID" }, _sum: { totalCents: true }, _count: { _all: true } }),
     prisma.offer.count({ where: { status: "SUBMITTED" } }),
@@ -126,6 +132,18 @@ export default async function OperatorPage() {
       </div> : <p className="subtle">Aucune action administrative enregistrée pour le moment.</p>}
       <p className="subtle" style={{ fontSize: 12, marginBottom: 0 }}>Le journal conserve les activations, suspensions et diffusions de demandes. Il ne remplace pas encore un journal de sécurité externe inviolable.</p>
     </section>
+
+    {clarificationDemands.length > 0 && <section className="panel" style={{ marginTop: 18 }}>
+      <div className="section-heading"><div><div className="eyebrow">Attente client</div><h2>Demandes à clarifier</h2></div><span className="pill">{countByStatus.NEEDS_CLARIFICATION || 0} en attente</span></div>
+      <p className="subtle">Ces demandes ne sont pas diffusées aux vendeurs. Le client doit répondre aux questions avant de rejoindre la file de matching.</p>
+      <div style={{ display: "grid", gap: 12 }}>
+        {clarificationDemands.map(demand => <article key={demand.id} style={{ borderTop: "1px solid var(--line)", paddingTop: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}><strong>{demand.city}</strong><span className="subtle"><Clock3 size={13} style={{ verticalAlign: "middle", marginRight: 4 }}/>{demand.updatedAt.toLocaleString("fr-FR")}</span></div>
+          <p className="subtle">{demand.anonymizedBrief}</p>
+          <p style={{ whiteSpace: "pre-line", fontSize: 13 }}>{demand.clarification}</p>
+        </article>)}
+      </div>
+    </section>}
 
     <DemandDistributionPanel />
     <OperatorPaymentsDashboard initialOrders={initialPaymentOrders} />
