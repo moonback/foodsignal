@@ -47,6 +47,26 @@ function quantityHasVerifiableEvidence(item: IntentItem, description: string) {
   return itemTokens.some(token => evidenceTokens.some(candidate => candidate === token || candidate.startsWith(token) || token.startsWith(candidate)));
 }
 
+function unitHasVerifiableEvidence(item: IntentItem) {
+  if (!item.unit || !item.quantityEvidence) return false;
+  const evidence = normalizeEvidence(item.quantityEvidence);
+  const unit = normalizeEvidence(item.unit);
+  const aliases: Record<string, string[]> = {
+    kg: ["kg", "kilo", "kilos", "kilogramme", "kilogrammes"],
+    g: ["g", "gramme", "grammes"],
+    l: ["l", "litre", "litres"],
+    ml: ["ml", "millilitre", "millilitres"],
+    piece: ["piece", "pieces", "unite", "unites"],
+    botte: ["botte", "bottes"],
+    barquette: ["barquette", "barquettes"],
+    bouteille: ["bouteille", "bouteilles"],
+    sachet: ["sachet", "sachets"],
+    boite: ["boite", "boites"],
+  };
+  const candidates = aliases[unit] || [unit];
+  return candidates.some(candidate => new RegExp(`(^|[^a-z])${candidate.replace(/[.*+?^\\u007b\\u007d()|[\\]\\\\]/g, "\\\\function getClarifications(output: z.infer<typeof modelOutputSchema>) {")}([^a-z]|$)`).test(evidence));
+}
+
 function getClarifications(output: z.infer<typeof modelOutputSchema>) {
   const missing: string[] = [];
   const questions = [...output.clarificationQuestions];
@@ -122,8 +142,12 @@ export async function analyzeFoodIntent(description: string): Promise<AnalyzedIn
   try { parsed = JSON.parse(content); } catch { throw new Error("AI_INTENT_INVALID_RESPONSE"); }
   const output = modelOutputSchema.parse(parsed);
   output.items = output.items.map(item => {
-    if (item.quantity === null || quantityHasVerifiableEvidence(item, description)) return item;
-    return { ...item, quantity: null, unit: null, quantityEvidence: null };
+    if (item.quantity === null) return item;
+    if (!quantityHasVerifiableEvidence(item, description)) {
+      return { ...item, quantity: null, unit: null, quantityEvidence: null };
+    }
+    if (item.unit !== null && !unitHasVerifiableEvidence(item)) return { ...item, unit: null };
+    return item;
   });
   const clarification = getClarifications(output);
   return {
