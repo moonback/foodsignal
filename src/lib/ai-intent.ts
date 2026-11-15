@@ -5,6 +5,7 @@ const itemSchema = z.object({
   quantity: z.number().positive().max(10000).nullable(),
   unit: z.string().trim().min(1).max(40).nullable(),
   category: z.string().trim().min(1).max(80).nullable(),
+  quantityEvidence: z.string().trim().max(160).nullable(),
   notes: z.string().trim().max(240).nullable().optional(),
 });
 
@@ -21,6 +22,30 @@ export type AnalyzedIntent = z.infer<typeof modelOutputSchema> & {
   isComplete: boolean;
   missingFields: string[];
 };
+
+function normalizeEvidence(value: string) {
+  return value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLocaleLowerCase("fr");
+}
+
+const frenchNumbers: Record<string, number> = {
+  un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6,
+  sept: 7, huit: 8, neuf: 9, dix: 10, douze: 12, quinze: 15,
+  vingt: 20, trente: 30, quarante: 40, cinquante: 50, cent: 100,
+};
+
+function quantityHasVerifiableEvidence(item: IntentItem, description: string) {
+  const evidence = item.quantityEvidence;
+  if (!evidence || !description.includes(evidence)) return false;
+  if (/\\b(personnes?|convives?|invites?)\\b/i.test(evidence)) return false;
+  const normalized = normalizeEvidence(evidence);
+  const numeric = normalized.match(/\\d+(?:[,.]\\d+)?/);
+  const word = normalized.match(/\\b(un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|douze|quinze|vingt|trente|quarante|cinquante|cent)\\b/);
+  const evidencedQuantity = numeric ? Number(numeric[0].replace(",", ".")) : word ? frenchNumbers[word[0]] : null;
+  if (evidencedQuantity === null || Math.abs(evidencedQuantity - item.quantity!) > 0.0001) return false;
+  const itemTokens = normalizeEvidence(item.name).match(/[a-z0-9]+/g) || [];
+  const evidenceTokens = normalized.match(/[a-z0-9]+/g) || [];
+  return itemTokens.some(token => evidenceTokens.some(candidate => candidate === token || candidate.startsWith(token) || token.startsWith(candidate)));
+}
 
 function getClarifications(output: z.infer<typeof modelOutputSchema>) {
   const missing: string[] = [];
@@ -65,7 +90,8 @@ export async function analyzeFoodIntent(description: string): Promise<AnalyzedIn
           content: [
             "Tu es le moteur d'extraction des demandes alimentaires de FOOD SIGNAL.",
             "Retourne uniquement un objet JSON avec summary, items, dietaryConstraints, preferences et clarificationQuestions.",
-            "Chaque item contient name, quantity, unit, category et notes. quantity et unit peuvent être null.",
+            "Chaque item contient name, quantity, unit, category, quantityEvidence et notes. quantity, unit et quantityEvidence peuvent être null.",
+            "quantityEvidence doit être une citation exacte et courte du texte utilisateur contenant explicitement la quantité ET le produit concerné. Si aucune preuve exacte n'existe, quantity doit être null et quantityEvidence null.",
             "RÈGLE ABSOLUE : ne déduis jamais une quantité, un poids, un nombre de pièces ou une unité qui n'est pas explicitement donné.",
             "Un nombre de convives n'est PAS une quantité de produits. Ne convertis jamais « pour 4 personnes » en 4 unités ou en grammes.",
             "Si la quantité manque, conserve quantity:null et pose une question claire. Si l'unité manque pour une quantité, conserve unit:null et demande l'unité.",
@@ -95,6 +121,10 @@ export async function analyzeFoodIntent(description: string): Promise<AnalyzedIn
   let parsed: unknown;
   try { parsed = JSON.parse(content); } catch { throw new Error("AI_INTENT_INVALID_RESPONSE"); }
   const output = modelOutputSchema.parse(parsed);
+  output.items = output.items.map(item => {
+    if (item.quantity === null || quantityHasVerifiableEvidence(item, description)) return item;
+    return { ...item, quantity: null, unit: null, quantityEvidence: null };
+  });
   const clarification = getClarifications(output);
   return {
     ...output,
