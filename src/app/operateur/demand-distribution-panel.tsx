@@ -10,13 +10,15 @@ export default function DemandDistributionPanel() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  async function load() {
-    const response = await fetch("/api/operator/demands");
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error || "Impossible de charger les demandes.");
-    setDemands(payload.demands);
-  }
-  useEffect(() => { load().catch(cause => setError(cause instanceof Error ? cause.message : "Erreur de chargement.")); }, []);
+  useEffect(() => {
+    fetch("/api/operator/demands")
+      .then(async response => {
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Impossible de charger les demandes.");
+        setDemands(payload.demands);
+      })
+      .catch(cause => setError(cause instanceof Error ? cause.message : "Erreur de chargement."));
+  }, []);
 
   async function publish(id: string) {
     setBusyId(id); setError(""); setNotice("");
