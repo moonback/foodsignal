@@ -21,12 +21,23 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     if (!existing) return NextResponse.json({ error: "Demande introuvable." }, { status: 404 });
     if (existing.status !== "NEEDS_CLARIFICATION") return NextResponse.json({ error: "Cette demande n'attend plus de précision." }, { status: 409 });
 
-    const updatedDescription = `${existing.rawDescription}\nPrécision du client : ${answer}`;
-    if (updatedDescription.length > 4000) return NextResponse.json({ error: "La demande et sa précision dépassent la taille autorisée." }, { status: 400 });
-    const intent = await analyzeFoodIntent(updatedDescription);
     const previousNeed = existing.structuredNeed && typeof existing.structuredNeed === "object" && !Array.isArray(existing.structuredNeed)
       ? existing.structuredNeed as Record<string, unknown>
       : {};
+    const previousItems = Array.isArray(previousNeed.items) ? previousNeed.items : [];
+    const missingItemNames = previousItems.flatMap(item => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+      const value = item as Record<string, unknown>;
+      if (typeof value.name !== "string" || (value.quantity !== null && value.unit !== null)) return [];
+      return [value.name];
+    });
+    const clarificationContext = missingItemNames.length
+      ? "Précision du client pour " + missingItemNames.join(", ") + " : "
+      : "Précision du client : ";
+    const updatedDescription = existing.rawDescription + "\n" + clarificationContext + answer;
+    if (updatedDescription.length > 4000) return NextResponse.json({ error: "La demande et sa précision dépassent la taille autorisée." }, { status: 400 });
+
+    const intent = await analyzeFoodIntent(updatedDescription);
     const structuredNeed = {
       ...serializeIntent(intent),
       ...(previousNeed.context ? { context: previousNeed.context } : {}),
