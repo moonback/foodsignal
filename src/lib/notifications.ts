@@ -44,7 +44,7 @@ export async function notifyOrderUsers(input: OrderNotification) {
         type: input.type,
         title: input.title,
         message: input.message,
-        eventKey: input.eventKey,
+        eventKey: `${order.id}:${input.eventKey}`,
       })),
       skipDuplicates: true,
     });
