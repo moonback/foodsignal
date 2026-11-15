@@ -55,6 +55,7 @@
 ## Lot 4 — Offres et optimisation
 
 - [ ] Soumission d'offres détaillées et validation des données.
+- [x] Espace particulier pour consulter ses demandes et comparer les propositions reçues.
 - [ ] Contrôle de conformité avec les contraintes du client.
 - [ ] Comparaison prix / qualité déclarée / disponibilité / logistique.
 - [ ] Combinaison multi-vendeurs avec coût complet et frais.
