@@ -93,53 +93,67 @@ export async function analyzeFoodIntent(description: string): Promise<AnalyzedIn
   if (!apiKey) throw new Error("AI_INTENT_NOT_CONFIGURED");
   const model = process.env.OPENAI_MODEL?.trim() || "gpt-4.1-mini";
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: "Bearer " + apiKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content: [
-            "Tu es le moteur d'extraction des demandes alimentaires de FOOD SIGNAL.",
-            "Retourne uniquement un objet JSON avec summary, items, dietaryConstraints, preferences et clarificationQuestions.",
-            "Chaque item contient name, quantity, unit, category, quantityEvidence et notes. quantity, unit et quantityEvidence peuvent être null.",
-            "quantityEvidence doit être une citation exacte et courte du texte utilisateur contenant explicitement la quantité ET le produit concerné. Si aucune preuve exacte n'existe, quantity doit être null et quantityEvidence null.",
-            "RÈGLE ABSOLUE : ne déduis jamais une quantité, un poids, un nombre de pièces ou une unité qui n'est pas explicitement donné.",
-            "Un nombre de convives n'est PAS une quantité de produits. Ne convertis jamais « pour 4 personnes » en 4 unités ou en grammes.",
-            "Si la quantité manque, conserve quantity:null et pose une question claire. Si l'unité manque pour une quantité, conserve unit:null et demande l'unité.",
-            "N'invente aucun produit. Ne transforme pas une préférence en contrainte ferme. Préserve les termes du client.",
-            "summary doit être un résumé neutre et court, sans coordonnées personnelles.",
-            "Les questions portent uniquement sur les informations nécessaires pour obtenir une demande exploitable.",
-            "Utilise une catégorie alimentaire française simple lorsque c'est évident, sinon null.",
-          ].join(" "),
-        },
-        { role: "user", content: description },
-      ],
-    }),
-    signal: AbortSignal.timeout(20000),
-  });
+  let response: Response;
+  try {
+    response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: [
+              "Tu es le moteur d'extraction des demandes alimentaires de FOOD SIGNAL.",
+              "Retourne uniquement un objet JSON avec summary, items, dietaryConstraints, preferences et clarificationQuestions.",
+              "Chaque item contient name, quantity, unit, category, quantityEvidence et notes. quantity, unit et quantityEvidence peuvent être null.",
+              "quantityEvidence doit être une citation exacte et courte du texte utilisateur contenant explicitement la quantité ET le produit concerné. Si aucune preuve exacte n'existe, quantity doit être null et quantityEvidence null.",
+              "RÈGLE ABSOLUE : ne déduis jamais une quantité, un poids, un nombre de pièces ou une unité qui n'est pas explicitement donné.",
+              "Un nombre de convives n'est PAS une quantité de produits. Ne convertis jamais « pour 4 personnes » en 4 unités ou en grammes.",
+              "Si la quantité manque, conserve quantity:null et pose une question claire. Si l'unité manque pour une quantité, conserve unit:null et demande l'unité.",
+              "N'invente aucun produit. Ne transforme pas une préférence en contrainte ferme. Préserve les termes du client.",
+              "summary doit être un résumé neutre et court, sans coordonnées personnelles.",
+              "Les questions portent uniquement sur les informations nécessaires pour obtenir une demande exploitable.",
+              "Utilise une catégorie alimentaire française simple lorsque c'est évident, sinon null.",
+            ].join(" "),
+          },
+          { role: "user", content: description },
+        ],
+      }),
+      signal: AbortSignal.timeout(20000),
+    });
+  } catch (error) {
+    console.error("AI Intent request failed", error);
+    throw new Error("AI_INTENT_PROVIDER_ERROR");
+  }
 
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
     console.error("AI Intent provider error", response.status, detail.slice(0, 1000));
     throw new Error(response.status === 429 ? "AI_INTENT_RATE_LIMITED" : "AI_INTENT_PROVIDER_ERROR");
   }
-  const payload = await response.json() as {
-    choices?: Array<{ message?: { content?: string | null } }>;
-  };
+  let payload: { choices?: Array<{ message?: { content?: string | null } }> };
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error("AI_INTENT_INVALID_RESPONSE");
+  }
   const content = payload.choices?.[0]?.message?.content;
   if (!content) throw new Error("AI_INTENT_INVALID_RESPONSE");
 
   let parsed: unknown;
   try { parsed = JSON.parse(content); } catch { throw new Error("AI_INTENT_INVALID_RESPONSE"); }
-  const output = modelOutputSchema.parse(parsed);
+  let output: z.infer<typeof modelOutputSchema>;
+  try {
+    output = modelOutputSchema.parse(parsed);
+  } catch {
+    throw new Error("AI_INTENT_INVALID_RESPONSE");
+  }
   output.items = output.items.map(item => {
     if (item.quantity === null) return item;
     if (!quantityHasVerifiableEvidence(item, description)) {
