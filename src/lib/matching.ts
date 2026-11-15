@@ -89,7 +89,8 @@ export function scoreSellerMatch(seller: MatchingSeller, demand: MatchingConstra
   if (specialtyMatches.length) reasons.push(`Spécialités : ${specialtyMatches.join(", ")}`);
   if (productMatches.length) reasons.push(`Catalogue : ${productMatches.join(", ")}`);
   if (productKeywordHits.length && !productMatches.length) reasons.push("Produits du catalogue proches des termes de la demande");
-  if (demand.budgetMaxCents != null) reasons.push("Présence d'un produit pertinent sous le budget (indication, pas un devis complet)");
+  if (demand.budgetMaxCents != null && budgetPoints > 0) reasons.push("Au moins un produit pertinent est affiché sous le budget (indice, pas un devis complet)");
+  if (demand.budgetMaxCents != null && budgetPoints === 0) reasons.push("Aucun produit pertinent affiché sous le budget");
   if (!reasons.length) reasons.push("Correspondance faible : vérification opérateur recommandée");
   return {
     sellerId: seller.id,
