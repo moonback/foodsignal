@@ -61,7 +61,7 @@ export default async function MyDemandsPage() {
         </div>
         <p style={{ lineHeight: 1.6 }}>{demand.anonymizedBrief}</p>
         {demand.status === "NEEDS_CLARIFICATION" && <ClarificationForm demandId={demand.id} questions={demand.clarification || "Merci de préciser les quantités et unités souhaitées."}/>}
-        <p className="subtle"><MapPin size={14} style={{ verticalAlign: "middle", marginRight: 5 }}/>{demand.city} · Budget : {demand.budgetMaxCents ? euro(demand.budgetMaxCents) : "libre"} · Réception : {demand.fulfillmentMode === "DELIVERY" ? "Livraison" : demand.fulfillmentMode === "PICKUP" ? "Retrait" : "À convenir"}</p>
+        <p className="subtle"><MapPin size={14} style={{ verticalAlign: "middle", marginRight: 5 }}/>{demand.city} · Budget : {demand.budgetMaxCents ? euro(demand.budgetMaxCents) : "libre"} · Réception : {demand.fulfillmentMode === "DELIVERY" ? "Livraison" : demand.fulfillmentMode === "PICKUP" ? "Retrait" : "À convenir"}{demand.requestedAt ? ` · Date : ${demand.requestedAt.toLocaleDateString("fr-FR")}` : ""}</p>
         {demand.order && <div className="notice" style={{ marginTop: 14 }}>Une commande est confirmée. <Link href={`/commandes/${demand.order.id}`}>Suivre son avancement</Link></div>}
         <div style={{ borderTop: "1px solid var(--line)", paddingTop: 18, marginTop: 18 }}>
           <div className="section-heading"><div><div className="eyebrow">Réponses des professionnels</div><h3>{demand.offers.length} proposition(s)</h3></div></div>
