@@ -24,7 +24,7 @@ export type AnalyzedIntent = z.infer<typeof modelOutputSchema> & {
 };
 
 function normalizeEvidence(value: string) {
-  return value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLocaleLowerCase("fr");
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("fr");
 }
 
 const frenchNumbers: Record<string, number> = {
@@ -36,10 +36,10 @@ const frenchNumbers: Record<string, number> = {
 function quantityHasVerifiableEvidence(item: IntentItem, description: string) {
   const evidence = item.quantityEvidence;
   if (!evidence || !description.includes(evidence)) return false;
-  if (/\\b(personnes?|convives?|invites?)\\b/i.test(evidence)) return false;
+  if (/\b(personnes?|convives?|invites?)\b/i.test(evidence)) return false;
   const normalized = normalizeEvidence(evidence);
-  const numeric = normalized.match(/\\d+(?:[,.]\\d+)?/);
-  const word = normalized.match(/\\b(un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|douze|quinze|vingt|trente|quarante|cinquante|cent)\\b/);
+  const numeric = normalized.match(/\d+(?:[,.]\d+)?/);
+  const word = normalized.match(/\b(un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|douze|quinze|vingt|trente|quarante|cinquante|cent)\b/);
   const evidencedQuantity = numeric ? Number(numeric[0].replace(",", ".")) : word ? frenchNumbers[word[0]] : null;
   if (evidencedQuantity === null || Math.abs(evidencedQuantity - item.quantity!) > 0.0001) return false;
   const itemTokens = normalizeEvidence(item.name).match(/[a-z0-9]+/g) || [];
@@ -49,7 +49,7 @@ function quantityHasVerifiableEvidence(item: IntentItem, description: string) {
 
 function unitHasVerifiableEvidence(item: IntentItem) {
   if (!item.unit || !item.quantityEvidence) return false;
-  const evidence = normalizeEvidence(item.quantityEvidence);
+  const evidenceTokens = normalizeEvidence(item.quantityEvidence).match(/[a-z0-9]+/g) || [];
   const unit = normalizeEvidence(item.unit);
   const aliases: Record<string, string[]> = {
     kg: ["kg", "kilo", "kilos", "kilogramme", "kilogrammes"],
@@ -63,8 +63,7 @@ function unitHasVerifiableEvidence(item: IntentItem) {
     sachet: ["sachet", "sachets"],
     boite: ["boite", "boites"],
   };
-  const candidates = aliases[unit] || [unit];
-  return candidates.some(candidate => new RegExp(`(^|[^a-z])${candidate.replace(/[.*+?^\\u007b\\u007d()|[\\]\\\\]/g, "\\\\function getClarifications(output: z.infer<typeof modelOutputSchema>) {")}([^a-z]|$)`).test(evidence));
+  return (aliases[unit] || [unit]).some(candidate => evidenceTokens.includes(candidate));
 }
 
 function getClarifications(output: z.infer<typeof modelOutputSchema>) {
@@ -76,11 +75,11 @@ function getClarifications(output: z.infer<typeof modelOutputSchema>) {
   }
   output.items.forEach((item, index) => {
     if (item.quantity === null) {
-      missing.push(`items[${index}].quantity`);
-      questions.push(`Quelle quantité souhaitez-vous pour « ${item.name} » (et dans quelle unité : kg, pièce, litre…) ?`);
+      missing.push(\`items[\${index}].quantity\`);
+      questions.push(\`Quelle quantité souhaitez-vous pour « \${item.name} » (et dans quelle unité : kg, pièce, litre…) ?\`);
     } else if (item.unit === null) {
-      missing.push(`items[${index}].unit`);
-      questions.push(`Dans quelle unité souhaitez-vous « ${item.name} » (kg, pièce, litre…) ?`);
+      missing.push(\`items[\${index}].unit\`);
+      questions.push(\`Dans quelle unité souhaitez-vous « \${item.name} » (kg, pièce, litre…) ?\`);
     }
   });
   return {
@@ -97,7 +96,7 @@ export async function analyzeFoodIntent(description: string): Promise<AnalyzedIn
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: \`Bearer \${apiKey}\`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
