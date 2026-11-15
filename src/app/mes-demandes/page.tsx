@@ -33,7 +33,7 @@ export default async function MyDemandsPage() {
       status: true, createdAt: true, requestedAt: true, fulfillmentMode: true,
       order: { select: { id: true, status: true } },
       offers: {
-        where: { status: "SUBMITTED" },
+        where: { status: { in: ["SUBMITTED", "ACCEPTED"] } },
         orderBy: [{ subtotalCents: "asc" }],
         select: {
           id: true, items: true, subtotalCents: true, preparationCents: true,
@@ -65,12 +65,12 @@ export default async function MyDemandsPage() {
           <div className="section-heading"><div><div className="eyebrow">Réponses des professionnels</div><h3>{demand.offers.length} proposition(s)</h3></div></div>
           {demand.offers.length ? <div style={{ display: "grid", gap: 12 }}>
             {demand.offers.map(offer => {
-              const total = offer.subtotalCents + offer.preparationCents + offer.deliveryCents;
+              const total = offer.subtotalCents + offer.preparationCents;
               const items = Array.isArray(offer.items) ? offer.items : [];
               return <div key={offer.id} style={{ border: "1px solid var(--line)", borderRadius: 14, padding: 18 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                   <div><strong><Store size={15} style={{ verticalAlign: "middle", marginRight: 6 }}/>{offer.seller.businessName}</strong><p className="subtle" style={{ margin: "5px 0" }}>{offer.seller.city} · {offer.seller.specialties.join(" · ")}</p></div>
-                  <strong style={{ color: "#1e6b4b", fontSize: 20 }}>{euro(total)}</strong>
+                  <strong style={{ color: "#1e6b4b", fontSize: 20 }}>{euro(total)} <span className="subtle" style={{ display: "block", fontSize: 11, fontWeight: 400 }}>hors livraison</span></strong>
                 </div>
                 <ul style={{ margin: "14px 0", paddingLeft: 20, color: "#53675a", fontSize: 13 }}>
                   {items.map((raw, index) => {
