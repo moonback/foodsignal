@@ -11,7 +11,8 @@
 - [x] API de création de demande avec validation Zod et rattachement au compte connecté.
 - [x] Stockage séparé du texte original et du résumé anonymisé.
 - [x] Limitation à la ville configurée via `PILOT_CITY` lorsque cette variable est renseignée.
-- [ ] Installation des dépendances, génération Prisma, migrations et build — non exécutés depuis le connecteur GitHub.
+- [x] Migrations Prisma initiale et ajout des champs de tarification rédigées.
+- [ ] Installation des dépendances, génération Prisma, application des migrations et build — non exécutés depuis le connecteur GitHub.
 - [ ] Tests automatisés — non créés / non exécutés.
 
 ## Lot 1 — Sécurité et comptes
@@ -34,10 +35,14 @@
 - [x] Profil avec nom, description, spécialités, adresse et ville.
 - [x] Nouveau profil inactif par défaut ; validation opérateur requise avant activation.
 - [x] Premier tableau de bord vendeur avec statut de validation.
-- [ ] Interface opérateur pour vérifier, activer ou refuser un professionnel.
+- [x] Console opérateur pour consulter, valider et suspendre les professionnels.
+- [x] Catalogue produits avec catégories, unités, prix et disponibilités.
+- [x] API catalogue protégée par rôle et propriété du vendeur.
 - [ ] Zone desservie, horaires et modalités de réception.
-- [ ] Catalogue, unités, prix et disponibilités.
-- [ ] Tableau des demandes ciblées et réponses commerciales.
+- [x] Correspondance déterministe ville + spécialités et diffusion opérateur contrôlée.
+- [x] Boîte de réception vendeur limitée aux données anonymisées.
+- [x] Dépôt d'offres structurées avec calcul du montant côté serveur.
+- [ ] Audit du matching et amélioration de la couverture des mots-clés.
 
 ## Lot 3 — Compréhension et diffusion
 
@@ -50,6 +55,7 @@
 ## Lot 4 — Offres et optimisation
 
 - [ ] Soumission d'offres détaillées et validation des données.
+- [x] Espace particulier pour consulter ses demandes et comparer les propositions reçues.
 - [ ] Contrôle de conformité avec les contraintes du client.
 - [ ] Comparaison prix / qualité déclarée / disponibilité / logistique.
 - [ ] Combinaison multi-vendeurs avec coût complet et frais.
