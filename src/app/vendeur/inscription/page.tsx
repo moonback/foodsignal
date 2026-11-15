@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, Store } from "lucide-react";
 
 const categories = ["Fruits et légumes", "Boucherie", "Poissonnerie", "Boulangerie", "Fromagerie", "Épicerie", "Produits fermiers", "Traiteur", "Boissons", "Autre"];
@@ -10,8 +10,13 @@ const categories = ["Fruits et légumes", "Boucherie", "Poissonnerie", "Boulange
 export default function SellerRegistrationPage() {
   const router = useRouter();
   const [selected, setSelected] = useState<string[]>([]);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/auth/me").then(response => response.json()).then(data => setSignedIn(Boolean(data.user))).catch(() => setSignedIn(false));
+  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -48,7 +53,7 @@ export default function SellerRegistrationPage() {
       <div className="eyebrow"><Store size={15} style={{ verticalAlign: "middle", marginRight: 6 }}/>Rejoindre le réseau local</div>
       <h1 style={{ fontSize: "clamp(2rem,5vw,3rem)", margin: "12px 0" }}>Présentez votre commerce.</h1>
       <p className="subtle">Créez votre profil professionnel. Il restera en attente de validation avant toute diffusion de demandes.</p>
-      <form onSubmit={submit}>
+      {signedIn === null ? <p className="notice">Vérification de votre compte…</p> : !signedIn ? <div className="notice">Connectez-vous ou créez un compte particulier avant de présenter votre commerce. <Link href="/compte">Accéder à mon compte</Link></div> : <form onSubmit={submit}>
         <div className="field"><label htmlFor="businessName">Nom du commerce ou de l’exploitation</label><input id="businessName" name="businessName" required minLength={2} maxLength={120}/></div>
         <div className="field"><label htmlFor="description">Présentation (facultatif)</label><textarea id="description" name="description" maxLength={1000} placeholder="Votre savoir-faire, vos engagements, vos produits…"/></div>
         <div className="field"><label>Vos spécialités (au moins une)</label><div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>{categories.map(category => <button key={category} type="button" className={selected.includes(category) ? "primary" : "secondary"} onClick={() => setSelected(current => current.includes(category) ? current.filter(item => item !== category) : [...current, category])}>{category}</button>)}</div></div>
@@ -56,7 +61,7 @@ export default function SellerRegistrationPage() {
         <div className="two-cols"><div className="field"><label htmlFor="city">Ville</label><input id="city" name="city" required minLength={2} autoComplete="address-level2"/></div><div className="field"><label htmlFor="postalCode">Code postal</label><input id="postalCode" name="postalCode" required minLength={4} maxLength={12} autoComplete="postal-code"/></div></div>
         {error && <p role="alert" style={{ color: "#b42318" }}>{error}</p>}
         <button className="primary" type="submit" disabled={busy || selected.length === 0} style={{ width: "100%", marginTop: 18 }}>{busy ? "Création…" : "Créer mon profil professionnel"}</button>
-      </form>
+      </form>}
     </div>
   </main>;
 }
