@@ -4,7 +4,7 @@ FOOD SIGNAL est une marketplace alimentaire inversée : le particulier exprime s
 
 ## État du dépôt
 
-Le dépôt contient un parcours MVP partiel : comptes, espaces opérateur et commerçant, catalogue, diffusion manuelle des demandes, propositions commerciales, confirmation de commande et suivi de retrait / livraison. **Ce n'est pas encore prêt pour un lancement public** : le paiement est intégré en mode configurable mais non validé en conditions Stripe, les notifications e-mail / push, l'analyse IA, le matching géographique avancé, les contrôles de sécurité complémentaires et les tests restent à traiter.
+Le dépôt contient un parcours MVP partiel : comptes, espaces opérateur et commerçant, catalogue, diffusion opérateur des demandes avec classement explicable des vendeurs, propositions commerciales, confirmation de commande et suivi de retrait / livraison. **Ce n'est pas encore prêt pour un lancement public** : le paiement est intégré en mode configurable mais non validé en conditions Stripe, les notifications e-mail / push, l'analyse IA, le matching géographique avancé, les contrôles de sécurité complémentaires et les tests restent à traiter.
 
 ## Stack
 
@@ -75,7 +75,7 @@ Ouvrir `http://localhost:3000`.
 - Activation et suspension des comptes vendeurs.
 - Compteurs de profils en attente et actifs.
 - Les routes d'administration exigent le rôle OPERATOR côté serveur.
-- Diffusion manuelle des demandes aux vendeurs actifs de la même ville dont les spécialités correspondent.
+- Classement déterministe des vendeurs actifs de la même ville : adéquation des spécialités (50 points), présence de produits du catalogue (35 points) et indice budgétaire (15 points).\n- Diffusion opérateur aux 10 meilleurs candidats dépassant le seuil de 25/100 ; les motifs et scores sont visibles avant l'envoi.\n- Le budget est un signal indicatif fondé sur le prix d'au moins un produit, pas une estimation du panier complet. Le score ne prouve ni disponibilité réelle, ni capacité de livraison, ni prix final.
 - Notifications opérateur pour les remboursements et les litiges Stripe.
 - Les vendeurs ne reçoivent que le résumé anonymisé, la ville, le budget et les modalités, sans les coordonnées client ni la description brute.
 
@@ -143,3 +143,10 @@ La console `/operateur` présente les 100 commandes les plus récentes, les paie
 Le centre de notifications persistant est accessible depuis les espaces client, vendeur et opérateur. Les événements de confirmation de commande, paiement confirmé par webhook, changement de statut vendeur, remboursement et litige créent des notifications ciblées. Le compteur de non-lues est actualisé périodiquement et les utilisateurs peuvent marquer une notification ou toute leur inbox comme lue. Les notifications sont dédupliquées par utilisateur et événement.
 
 Ce lot fournit des notifications dans l’application uniquement. Aucun e-mail, SMS, notification push mobile ou service externe n’est envoyé ; ces canaux nécessitent un fournisseur, une configuration et les préférences / consentements appropriés.
+
+
+## Matching vendeur — première version explicable
+
+Le moteur actuel reste déterministe et sans appel à un fournisseur IA. Il détecte des catégories à partir du résumé anonymisé, élimine les vendeurs inactifs ou situés dans une autre ville, puis classe les candidats selon trois signaux vérifiables : spécialités déclarées (50 points), produits disponibles du catalogue (35 points) et indice budgétaire indicatif (15 points). Seuls les dix meilleurs candidats ayant au moins 25/100 sont proposés à la diffusion opérateur.
+
+La console affiche le nombre de candidats, les meilleurs scores et les raisons principales. La diffusion reste une action explicite de l'opérateur. Les coordonnées personnelles et la description originale ne sont jamais utilisées par ce moteur ni transmises aux vendeurs. Les contraintes de quantité, la disponibilité à une date précise, la zone de livraison, le rayon géographique, la conformité détaillée des lignes et l'optimisation multi-vendeurs ne sont pas encore modélisés par ce score.
