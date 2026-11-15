@@ -6,7 +6,14 @@ import { ArrowRight, Send, Sparkles } from "lucide-react";
 type Demand = {
   id: string; anonymizedBrief: string; city: string; budgetMaxCents: number | null;
   requestedAt: string | null; suggestedCategories: string[]; candidateCount: number;
-  topMatches: Array<{ score: number; reasons: string[]; matchedCategories: string[] }>;
+  topMatches: Array<{ score: number; reasons: string[]; matchedCategories: string[]; estimatedBasketCents: number | null }>;
+  structuredItemCount: number;
+  basketPlans: Array<{
+    sellerIds: string[];
+    sellerNames: string[];
+    estimatedSubtotalCents: number;
+    allocations: Array<{ requestedItem: { name: string; quantity: number; unit?: string }; sellerId: string; productName: string; quantity: number; unit: string | null; lineTotalCents: number }>;
+  }>;
 };
 export default function DemandDistributionPanel() {
   const [demands, setDemands] = useState<Demand[]>([]);
@@ -45,6 +52,19 @@ export default function DemandDistributionPanel() {
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}><strong>{demand.city}</strong><span className="pill">{demand.budgetMaxCents ? (demand.budgetMaxCents/100).toLocaleString("fr-FR",{style:"currency",currency:"EUR"}) : "Budget libre"}</span></div>
         <p className="subtle" style={{ color: "#27362d" }}>{demand.anonymizedBrief}</p>
         <p className="subtle">Catégories détectées : {demand.suggestedCategories.length ? demand.suggestedCategories.join(" · ") : "Aucune — clarification nécessaire"}</p>
+        {demand.structuredItemCount > 0 && <div className="panel" style={{ marginTop: 12, padding: 12 }}>
+          <strong>Estimations de paniers complets</strong>
+          <p className="subtle" style={{ margin: "4px 0 8px" }}>{demand.structuredItemCount} ligne(s) structurée(s) · montants hors préparation et livraison</p>
+          {demand.basketPlans.length > 0 ? <ol style={{ margin: 0, paddingLeft: 20 }}>
+            {demand.basketPlans.map((plan, index) => <li key={plan.sellerIds.join("-")} style={{ marginTop: 7 }}>
+              <strong>{(plan.estimatedSubtotalCents / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}</strong>
+              {" — "}{plan.sellerNames.join(" + ")}
+              <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+                {plan.allocations.map((line, lineIndex) => <li key={lineIndex}>{line.quantity} {line.unit || ""} {line.productName}</li>)}
+              </ul>
+            </li>)}
+          </ol> : <p className="subtle">Aucune combinaison ne couvre toutes les lignes avec les produits et unités actuellement renseignés.</p>}
+        </div>}
         <div className="notice" style={{ marginTop: 12 }}>
           <Sparkles size={15} style={{ verticalAlign: "middle", marginRight: 6 }}/>
           {demand.candidateCount} professionnel(s) pertinents identifiés
@@ -60,6 +80,6 @@ export default function DemandDistributionPanel() {
       </article>)}
       {demands.length === 0 && <div className="panel"><p className="subtle">Aucune demande en brouillon à diffuser.</p></div>}
     </div>
-    <p className="subtle" style={{ fontSize: 12 }}>Score explicable fondé sur les spécialités, le catalogue disponible, la ville et des indices de budget. Seuls les professionnels actifs de la ville sont éligibles ; les 10 meilleurs scores (minimum 25/100) reçoivent la demande. Ce score aide l'opérateur et ne garantit ni disponibilité réelle, ni prix final, ni capacité de livraison.</p>
+    <p className="subtle" style={{ fontSize: 12 }}>Score explicable fondé sur les spécialités, le catalogue disponible et le coût du panier structuré. Seuls les professionnels actifs de la ville sont éligibles ; les 10 meilleurs scores (minimum 25/100) reçoivent la demande. Les paniers combinés sont des estimations hors frais, à vérifier avec les vendeurs.</p>
   </section>;
 }
