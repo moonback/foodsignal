@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Clock3, MapPin, Package, Store } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import OrderPayment from "./order-payment";
 
 const labels: Record<string, string> = {
   CONFIRMED: "Commande confirmée",
@@ -22,7 +23,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
   const order = await prisma.order.findFirst({
     where: { id, demand: { customerId: user.id } },
     select: {
-      id: true, status: true, fulfillmentMode: true, deliveryAddress: true,
+      id: true, status: true, paymentStatus: true, fulfillmentMode: true, deliveryAddress: true,
       totalCents: true, confirmedAt: true, updatedAt: true,
       demand: {
         select: {
@@ -54,6 +55,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
       </div>
       <p className="subtle" style={{ marginTop: 18 }}><Clock3 size={14} style={{ verticalAlign: "middle", marginRight: 5 }}/>Confirmée le {order.confirmedAt.toLocaleString("fr-FR")} · Mise à jour le {order.updatedAt.toLocaleString("fr-FR")}</p>
     </section>
+    <OrderPayment orderId={order.id} paymentStatus={order.paymentStatus} orderStatus={order.status}/>
     <section className="panel" style={{ marginTop: 16 }}>
       <h2 style={{ fontSize: 20 }}>Votre commerçant</h2>
       {offer && <p><Store size={15} style={{ verticalAlign: "middle", marginRight: 6 }}/><strong>{offer.seller.businessName}</strong> · {offer.seller.city}</p>}

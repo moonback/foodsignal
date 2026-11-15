@@ -70,7 +70,12 @@
 - [x] Parcours de retrait et de livraison avec adresse obligatoire pour la livraison.
 - [ ] Notifications et suivi des états.
 - [ ] Livraison par partenaires locaux, après contractualisation.
-- [ ] Paiement marketplace et reversements, après choix et configuration du prestataire. Aucun paiement n'est déclenché dans le parcours actuel.
+- [x] Connexion Stripe Express du commerçant et lecture des capacités de transfert / versement.
+- [x] Checkout Stripe à destination du compte vendeur, avec commission configurable en points de base.
+- [x] Webhook signé pour confirmer, échouer ou expirer un paiement ; le retour navigateur ne valide jamais un paiement.
+- [x] Blocage de la préparation vendeur tant que le paiement n'est pas confirmé.
+- [ ] Tests Stripe en mode test, validation de la configuration Connect France, migration / validation Accounts v2 et revue du modèle de responsabilité avant production.
+- [ ] Gestion des remboursements, litiges, rapprochement comptable et notifications.
 
 ## Lot 6 — Qualité et pilote terrain
 

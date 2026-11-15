@@ -4,7 +4,7 @@ FOOD SIGNAL est une marketplace alimentaire inversée : le particulier exprime s
 
 ## État du dépôt
 
-Le dépôt contient un parcours MVP partiel : comptes, espaces opérateur et commerçant, catalogue, diffusion manuelle des demandes, propositions commerciales, confirmation de commande et suivi de retrait / livraison. **Ce n'est pas encore prêt pour un lancement public** : le paiement, les notifications, l'analyse IA, le matching géographique avancé, les contrôles de sécurité complémentaires et les tests restent à traiter.
+Le dépôt contient un parcours MVP partiel : comptes, espaces opérateur et commerçant, catalogue, diffusion manuelle des demandes, propositions commerciales, confirmation de commande et suivi de retrait / livraison. **Ce n'est pas encore prêt pour un lancement public** : le paiement est intégré en mode configurable mais non validé en conditions Stripe, les notifications, l'analyse IA, le matching géographique avancé, les contrôles de sécurité complémentaires et les tests restent à traiter.
 
 ## Stack
 
@@ -38,7 +38,10 @@ Ouvrir `http://localhost:3000`.
 | `OPENAI_MODEL` | Modèle envisagé pour l'analyse du besoin |
 | `PILOT_CITY` | Ville du pilote, à choisir avant le lancement |
 | `PILOT_COUNTRY` | Pays du pilote, `FR` par défaut |
-| `NEXT_PUBLIC_APP_URL` | URL de l'application |
+| `NEXT_PUBLIC_APP_URL` | URL publique de l'application, utilisée pour les retours Stripe |
+| `STRIPE_SECRET_KEY` | Clé secrète Stripe (commencer par une clé de test) |
+| `STRIPE_WEBHOOK_SECRET` | Secret de signature de l'endpoint webhook Stripe |
+| `FOOD_SIGNAL_PLATFORM_FEE_BPS` | Commission explicite en points de base (ex. 500 = 5 %) ; obligatoire pour ouvrir Checkout |
 
 ## Parcours actuellement implémentés
 
@@ -50,6 +53,7 @@ Ouvrir `http://localhost:3000`.
 - Description originale et résumé anonymisé stockés séparément.
 - Historique personnel des demandes et comparaison des propositions reçues.
 - Confirmation d'une proposition et suivi de commande sur `/commandes/[id]`.
+- Paiement via Stripe Checkout, redirection hébergée et statut confirmé uniquement par webhook signé.
 
 ### Professionnel
 - Inscription depuis un compte connecté.
@@ -61,6 +65,8 @@ Ouvrir `http://localhost:3000`.
 - Boîte de réception des demandes qui lui sont attribuées.
 - Dépôt d'offres détaillées avec sous-total calculé côté serveur.
 - Gestion des commandes acceptées : préparation, prêt au retrait ou départ en livraison, puis confirmation de remise.
+- Connexion du compte Stripe Express du commerçant et vérification des capacités de transfert / versement.
+- Le commerçant ne peut démarrer la préparation qu'après confirmation du paiement par webhook Stripe.
 
 ### Opérateur
 - Console de revue des professionnels inscrits.
@@ -77,7 +83,7 @@ Pour attribuer le premier rôle opérateur, créer un compte par le parcours nor
 - Les rôles sont relus depuis PostgreSQL à chaque requête authentifiée afin qu'une modification de rôle ou suppression de compte prenne effet sans attendre l'expiration du jeton.
 - L'auto-inscription ne permet pas de choisir le rôle OPERATOR.
 - La session ne peut pas être lue par JavaScript côté navigateur (cookie HttpOnly).
-- **Il manque encore** la vérification d'e-mail, la récupération de mot de passe, le rate limiting distribué, les tests CSRF / origine, les procédures RGPD, les tests automatisés et l'audit sécurité.
+- **Il manque encore** la vérification d'e-mail, la récupération de mot de passe, le rate limiting distribué, les tests CSRF / origine, les procédures RGPD, les tests automatisés, l'audit sécurité et les scénarios de remboursement / litige.
 - Le masquage des coordonnées dans le résumé reste heuristique et ne garantit pas une anonymisation parfaite.
 - Ne pas déployer publiquement ni traiter de données personnelles réelles avant d'avoir achevé les contrôles manquants et vérifié le build.
 
@@ -89,7 +95,7 @@ Pour attribuer le premier rôle opérateur, créer un compte par le parcours nor
 4. Dépôt, centralisation et vérification des offres.
 5. Comparaison des offres reçues.
 6. Validation d'une offre, commande unique et suivi des étapes de préparation / remise.
-7. Paiement marketplace, reversements et notifications (non implémentés).
+7. Paiement marketplace via Stripe Checkout et Connect (intégration technique présente, validation réelle et remboursements encore à traiter).
 
 L'application mobile native, la reconnaissance photo du réfrigérateur, la prévision des achats, les casiers réfrigérés, la livraison autonome, l'IA prédictive avancée et l'expansion internationale sont hors MVP.
 
@@ -104,7 +110,11 @@ Consulter [ROADMAP.md](./ROADMAP.md) pour le détail des lots. Les objectifs com
 - Le montant est recalculé côté serveur à partir de la proposition : produits + préparation, et frais de livraison uniquement si le client choisit la livraison.
 - Le commerçant ne peut faire évoluer que les commandes associées à sa proposition acceptée.
 - Les transitions autorisées sont : confirmée → préparation → prête au retrait → terminée, ou confirmée → préparation → en livraison → terminée.
-- Aucun paiement n'est encaissé et aucune livraison n'est commandée auprès d'un partenaire.
+- Le paiement Stripe est activable uniquement avec des clés, un webhook et un taux de commission explicitement configurés. Les paiements de test doivent être utilisés avant toute activation réelle.
+- Le vendeur connecte son compte Stripe Express depuis son tableau de bord ; l'état des capacités de transfert et de versement est relu auprès de Stripe.
+- Le client est redirigé vers Stripe Checkout. Le retour navigateur ne valide jamais un paiement : seul le webhook signé met la commande à l'état payé.
+- Les commandes non payées ne peuvent pas passer en préparation. Les sessions expirées ou échouées peuvent être retentées.
+- Le modèle Checkout utilise des destination charges avec commission explicite. FOOD SIGNAL supporte les frais de traitement Stripe et assume la responsabilité financière de la plateforme associée à ce modèle ; vérifier les obligations contractuelles et le modèle de risque avant production.
 
 ## Vérification technique
 

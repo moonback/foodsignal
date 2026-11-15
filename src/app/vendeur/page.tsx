@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import ProductCatalog from "./product-catalog";
 import SellerDemandInbox from "./seller-demand-inbox";
 import SellerOrderActions from "./seller-order-actions";
+import StripeConnectPanel from "./stripe-connect-panel";
 
 export default async function SellerDashboardPage() {
   const user = await getCurrentUser();
@@ -16,6 +17,7 @@ export default async function SellerDashboardPage() {
     where: { userId: user.id },
     select: {
       id: true, businessName: true, city: true, isActive: true, specialties: true,
+      stripeAccountId: true, stripeTransfersEnabled: true, stripePayoutsEnabled: true,
       products: { orderBy: [{ isAvailable: "desc" }, { name: "asc" }], select: { id: true, name: true, category: true, unit: true, description: true, priceCents: true, isAvailable: true } },
     },
   });
@@ -27,7 +29,7 @@ export default async function SellerDashboardPage() {
       demand: {
         select: {
           id: true, city: true, anonymizedBrief: true,
-          order: { select: { id: true, status: true, fulfillmentMode: true, totalCents: true, deliveryAddress: true, updatedAt: true } },
+          order: { select: { id: true, status: true, paymentStatus: true, fulfillmentMode: true, totalCents: true, deliveryAddress: true, updatedAt: true } },
         },
       },
     },
@@ -56,6 +58,9 @@ export default async function SellerDashboardPage() {
       </section>
     </div>
     <section className="section" style={{ paddingBottom: 0 }}>
+      <StripeConnectPanel hasAccount={Boolean(seller.stripeAccountId)} initiallyReady={seller.stripeTransfersEnabled && seller.stripePayoutsEnabled} active={seller.isActive}/>
+    </section>
+    <section className="section" style={{ paddingBottom: 0 }}>
       <div className="section-heading"><div><div className="eyebrow">Commandes confirmées</div><h2>À préparer et à remettre</h2></div><p>{orders.length} commande(s)</p></div>
       <div style={{ display: "grid", gap: 12 }}>
         {orders.map(({ demand }) => demand.order && <article className="panel" key={demand.order.id}>
@@ -65,7 +70,7 @@ export default async function SellerDashboardPage() {
           </div>
           <p style={{ lineHeight: 1.5 }}>{demand.anonymizedBrief}</p>
           {demand.order.fulfillmentMode === "DELIVERY" && <p className="subtle"><MapPin size={14} style={{ verticalAlign: "middle", marginRight: 5 }}/>{demand.order.deliveryAddress}</p>}
-          <SellerOrderActions orderId={demand.order.id} status={demand.order.status} fulfillmentMode={demand.order.fulfillmentMode}/>
+          <SellerOrderActions orderId={demand.order.id} status={demand.order.status} paymentStatus={demand.order.paymentStatus} fulfillmentMode={demand.order.fulfillmentMode}/>
         </article>)}
         {orders.length === 0 && <div className="panel"><p className="subtle">Aucune commande confirmée pour le moment.</p></div>}
       </div>

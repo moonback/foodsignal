@@ -20,9 +20,11 @@ export async function PATCH(request: Request) {
 
     const order = await prisma.order.findFirst({
       where: { id: input.orderId, demand: { offers: { some: { sellerId: seller.id, status: "ACCEPTED" } } } },
-      select: { id: true, status: true, fulfillmentMode: true },
+      select: { id: true, status: true, paymentStatus: true, fulfillmentMode: true },
     });
     if (!order) return NextResponse.json({ error: "Commande introuvable pour votre établissement." }, { status: 404 });
+
+    if (order.paymentStatus !== "PAID") return NextResponse.json({ error: "La préparation est bloquée tant que le paiement n'est pas confirmé par Stripe." }, { status: 409 });
 
     const transitions: Record<string, string[]> = {
       CONFIRMED: ["PREPARING"],
