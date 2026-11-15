@@ -39,7 +39,10 @@
 - [x] Catalogue produits avec catégories, unités, prix et disponibilités.
 - [x] API catalogue protégée par rôle et propriété du vendeur.
 - [ ] Zone desservie, horaires et modalités de réception.
-- [ ] Tableau des demandes ciblées et réponses commerciales.
+- [x] Correspondance déterministe ville + spécialités et diffusion opérateur contrôlée.
+- [x] Boîte de réception vendeur limitée aux données anonymisées.
+- [x] Dépôt d'offres structurées avec calcul du montant côté serveur.
+- [ ] Audit du matching et amélioration de la couverture des mots-clés.
 
 ## Lot 3 — Compréhension et diffusion
 
