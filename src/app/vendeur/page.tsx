@@ -4,6 +4,7 @@ import { Store, Clock3, Package, MapPin, ArrowLeft } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import ProductCatalog from "./product-catalog";
+import SellerDemandInbox from "./seller-demand-inbox";
 
 export default async function SellerDashboardPage() {
   const user = await getCurrentUser();
@@ -41,6 +42,7 @@ export default async function SellerDashboardPage() {
         <p className="subtle"><Package size={15} style={{ verticalAlign: "middle", marginRight: 6 }}/>Spécialités : {seller.specialties.join(", ")}</p>
       </section>
     </div>
+    <SellerDemandInbox />
     <section className="section" style={{ paddingBottom: 0 }}>
       <div className="section-heading"><div><div className="eyebrow">Offre commerciale</div><h2>Votre catalogue</h2></div><p>{seller.products.length} produit(s)</p></div>
       <ProductCatalog initialProducts={seller.products}/>
