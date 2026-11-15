@@ -28,7 +28,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const missingItemNames = previousItems.flatMap(item => {
       if (!item || typeof item !== "object" || Array.isArray(item)) return [];
       const value = item as Record<string, unknown>;
-      if (typeof value.name !== "string" || (value.quantity !== null && value.unit !== null)) return [];
+      if (typeof value.name !== "string" || (value.quantity !== null && value.quantity !== undefined && value.unit !== null && value.unit !== undefined)) return [];
       return [value.name];
     });
     const clarificationContext = missingItemNames.length
