@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { stripeRequest } from "@/lib/stripe";
+import { notifyOrderUsers } from "@/lib/notifications";
 
 const schema = z.object({ reason: z.string().trim().min(10).max(500) });
 type StripeRefund = { id: string; status: string; amount: number };
@@ -48,6 +49,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (result.status === "succeeded") {
       await prisma.order.updateMany({ where: { id: order.id, paymentStatus: "PAID" }, data: { paymentStatus: "REFUNDED" } });
     }
+    await notifyOrderUsers({
+      orderId: order.id, eventKey: `refund-requested-${result.id}`, type: "REFUND_UPDATED",
+      title: result.status === "succeeded" ? "Remboursement effectué" : "Remboursement en cours",
+      message: result.status === "succeeded" ? "Le remboursement de votre commande a été confirmé." : "La demande de remboursement est transmise à Stripe.",
+      includeOperators: true,
+    });
     return NextResponse.json({ refund: { id: result.id, status: result.status, amountCents: result.amount } }, { status: 202 });
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: "Un motif de remboursement (10 à 500 caractères) est obligatoire." }, { status: 400 });
