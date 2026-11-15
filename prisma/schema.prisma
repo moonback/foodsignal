@@ -69,6 +69,7 @@ model Seller {
   isActive    Boolean  @default(false)
   products    Product[]
   offers      Offer[]
+  demandRecipients DemandRecipient[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -106,6 +107,7 @@ model Demand {
   status           DemandStatus @default(ANALYZING)
   clarification    String?
   offers           Offer[]
+  recipients       DemandRecipient[]
   order            Order?
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
@@ -140,4 +142,15 @@ model Order {
   totalCents      Int
   confirmedAt     DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
+}
+
+model DemandRecipient {
+  id        String   @id @default(cuid())
+  demandId  String
+  demand    Demand   @relation(fields: [demandId], references: [id], onDelete: Cascade)
+  sellerId  String
+  seller    Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@unique([demandId, sellerId])
+  @@index([sellerId, createdAt])
 }
