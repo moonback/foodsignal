@@ -42,7 +42,7 @@
 - [x] Correspondance déterministe ville + spécialités et diffusion opérateur contrôlée.
 - [x] Boîte de réception vendeur limitée aux données anonymisées.
 - [x] Dépôt d'offres structurées avec calcul du montant côté serveur.
-- [ ] Audit du matching et amélioration de la couverture des mots-clés.
+- [ ] Tests unitaires du scoring, audit de couverture des mots-clés et calibration sur des demandes réelles anonymisées.
 
 ## Lot 3 — Compréhension et diffusion
 
