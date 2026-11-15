@@ -68,6 +68,7 @@ test("attribue un score élevé à un vendeur dont spécialités et catalogue co
 
 test("exclut les produits indisponibles du score catalogue", () => {
   const result = scoreSellerMatch(seller("seller-b", {
+    specialties: [],
     products: [{ name: "Panier de légumes", category: "Fruits et légumes", priceCents: 1000, isAvailable: false }],
   }), demand);
   assert.equal(result.availableProducts, 0);
