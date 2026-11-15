@@ -33,6 +33,9 @@ function getClarifications(output: z.infer<typeof modelOutputSchema>) {
     if (item.quantity === null) {
       missing.push(`items[${index}].quantity`);
       questions.push(`Quelle quantité souhaitez-vous pour « ${item.name} » (et dans quelle unité : kg, pièce, litre…) ?`);
+    } else if (item.unit === null) {
+      missing.push(`items[${index}].unit`);
+      questions.push(`Dans quelle unité souhaitez-vous « ${item.name} » (kg, pièce, litre…) ?`);
     }
   });
   return {
