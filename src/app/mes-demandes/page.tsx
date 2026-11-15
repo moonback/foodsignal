@@ -51,7 +51,7 @@ export default async function MyDemandsPage() {
     </header>
     <div className="eyebrow">Espace particulier</div>
     <h1 style={{ fontSize: "clamp(2rem,5vw,3rem)" }}>Mes demandes</h1>
-    <p className="subtle">Retrouvez vos besoins et comparez les propositions reçues. Aucune commande ni aucun paiement n'est déclenché depuis cet écran.</p>
+    <p className="subtle">Retrouvez vos besoins et comparez les propositions reçues. La confirmation d'une proposition crée une commande. Aucun paiement n'est encaissé en ligne.</p>
     <div style={{ display: "grid", gap: 18, marginTop: 28 }}>
       {demands.map(demand => <article className="panel" key={demand.id}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
