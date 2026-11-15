@@ -22,6 +22,7 @@ const auditLabels: Record<string, string> = {
   SELLER_ACTIVATED: "Commerçant activé",
   SELLER_SUSPENDED: "Commerçant suspendu",
   DEMAND_DISTRIBUTED: "Demande diffusée",
+  REFUND_REQUESTED: "Remboursement demandé",
 };
 
 function euro(cents: number) {
