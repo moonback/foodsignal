@@ -34,7 +34,15 @@ export async function POST(request: Request) {
     }
 
     const intent = await analyzeFoodIntent(body.description);
-    const structuredNeed = serializeIntent(intent);
+    const structuredNeed = {
+      ...serializeIntent(intent),
+      context: {
+        budgetMaxCents: body.budgetEuros ? Math.round(body.budgetEuros * 100) : null,
+        requestedAt: body.requestedAt || null,
+        fulfillmentMode: body.fulfillmentMode || null,
+        city: body.city,
+      },
+    };
     const demand = await prisma.demand.create({
       data: {
         customerId: user.id,
