@@ -30,8 +30,13 @@ async function getRankedCandidates(demand: {
   };
   const matches = rankSellerMatches(sellers, constraints);
   const sellerNames = Object.fromEntries(sellers.map(seller => [seller.id, seller.businessName]));
+  const sellersById = new Map(sellers.map(seller => [seller.id, seller]));
+  const rankedSellers = matches.flatMap(match => {
+    const seller = sellersById.get(match.sellerId);
+    return seller ? [seller] : [];
+  });
   const basketPlans = requestedItems.length
-    ? planMultiSellerBaskets(sellers, requestedItems, 3, 5).map(plan => ({
+    ? planMultiSellerBaskets(rankedSellers, requestedItems, 3, 5).map(plan => ({
         ...plan,
         sellerNames: plan.sellerIds.map(id => sellerNames[id] || id),
       }))
