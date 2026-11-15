@@ -1,0 +1,57 @@
+import { prisma } from "@/lib/prisma";
+import type { NotificationType } from "@prisma/client";
+
+type OrderNotification = {
+  orderId: string;
+  eventKey: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  includeOperators?: boolean;
+};
+
+export async function notifyOrderUsers(input: OrderNotification) {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: input.orderId },
+      select: {
+        id: true,
+        demand: {
+          select: {
+            customerId: true,
+            offers: {
+              where: { status: "ACCEPTED" },
+              select: { seller: { select: { userId: true } } },
+              take: 1,
+            },
+          },
+        },
+      },
+    });
+    if (!order) return;
+    const recipientIds = new Set<string>();
+    if (order.demand.customerId) recipientIds.add(order.demand.customerId);
+    const sellerUserId = order.demand.offers[0]?.seller.userId;
+    if (sellerUserId) recipientIds.add(sellerUserId);
+    if (input.includeOperators) {
+      const operators = await prisma.user.findMany({ where: { role: "OPERATOR" }, select: { id: true } });
+      operators.forEach(operator => recipientIds.add(operator.id));
+    }
+    if (recipientIds.size === 0) return;
+    await prisma.notification.createMany({
+      data: [...recipientIds].map(userId => ({
+        userId,
+        type: input.type,
+        title: input.title,
+        message: input.message,
+        href: `/commandes/${order.id}`,
+        eventKey: input.eventKey,
+      })),
+      skipDuplicates: true,
+    });
+  } catch (error) {
+    // Notification delivery must never roll back an order or make Stripe retry a
+    // successfully processed payment event.
+    console.error("notifyOrderUsers", error);
+  }
+}
