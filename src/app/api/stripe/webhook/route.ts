@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notifyOrderUsers } from "@/lib/notifications";
 
 export const runtime = "nodejs";
 
@@ -61,6 +62,11 @@ export async function POST(request: Request) {
         },
         update: { status, amountCents: typeof object.amount === "number" ? object.amount : 0, reason: typeof object.reason === "string" ? object.reason : "unknown" },
       });
+      await notifyOrderUsers({
+        orderId: order.id, eventKey: `dispute-${object.id}`, type: "DISPUTE_OPENED",
+        title: "Litige de paiement signalé", message: "Un litige Stripe concerne cette commande. L'équipe FOOD SIGNAL doit examiner le dossier.",
+        includeOperators: true,
+      });
       return NextResponse.json({ received: true });
     }
 
@@ -75,6 +81,12 @@ export async function POST(request: Request) {
         if (status === "SUCCEEDED") {
           await prisma.order.updateMany({ where: { id: orderId, paymentStatus: "PAID" }, data: { paymentStatus: "REFUNDED" } });
         }
+        await notifyOrderUsers({
+          orderId, eventKey: `refund-${object.id}-${status.toLowerCase()}`, type: "REFUND_UPDATED",
+          title: status === "SUCCEEDED" ? "Remboursement effectué" : status === "FAILED" ? "Échec du remboursement" : "Remboursement en cours",
+          message: status === "SUCCEEDED" ? "Le remboursement de votre commande a été confirmé." : status === "FAILED" ? "Le remboursement n'a pas abouti. L'équipe FOOD SIGNAL vérifie la situation." : "Votre demande de remboursement est en cours de traitement.",
+          includeOperators: true,
+        });
       }
       return NextResponse.json({ received: true });
     }
@@ -85,9 +97,13 @@ export async function POST(request: Request) {
     if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
       if (object.payment_status !== "paid") return NextResponse.json({ received: true });
       const paymentIntent = typeof object.payment_intent === "string" ? object.payment_intent : null;
-      await prisma.order.updateMany({
+      const paid = await prisma.order.updateMany({
         where: { id: orderId, stripeCheckoutSessionId: object.id, paymentStatus: "PENDING" },
         data: { paymentStatus: "PAID", stripePaymentIntentId: paymentIntent, paidAt: new Date() },
+      });
+      if (paid.count === 1) await notifyOrderUsers({
+        orderId, eventKey: "payment-received", type: "PAYMENT_RECEIVED",
+        title: "Paiement confirmé", message: "Le paiement de votre commande a été confirmé par Stripe.",
       });
     } else if (event.type === "checkout.session.async_payment_failed" || event.type === "checkout.session.expired") {
       await prisma.order.updateMany({
