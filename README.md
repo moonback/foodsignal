@@ -4,7 +4,7 @@ FOOD SIGNAL est une marketplace alimentaire inversée : le particulier exprime s
 
 ## État du dépôt
 
-Le dépôt contient un parcours MVP partiel : comptes, espaces opérateur et commerçant, catalogue, diffusion manuelle des demandes, propositions commerciales, confirmation de commande et suivi de retrait / livraison. **Ce n'est pas encore prêt pour un lancement public** : le paiement est intégré en mode configurable mais non validé en conditions Stripe, les notifications, l'analyse IA, le matching géographique avancé, les contrôles de sécurité complémentaires et les tests restent à traiter.
+Le dépôt contient un parcours MVP partiel : comptes, espaces opérateur et commerçant, catalogue, diffusion manuelle des demandes, propositions commerciales, confirmation de commande et suivi de retrait / livraison. **Ce n'est pas encore prêt pour un lancement public** : le paiement est intégré en mode configurable mais non validé en conditions Stripe, les notifications e-mail / push, l'analyse IA, le matching géographique avancé, les contrôles de sécurité complémentaires et les tests restent à traiter.
 
 ## Stack
 
@@ -54,6 +54,7 @@ Ouvrir `http://localhost:3000`.
 - Historique personnel des demandes et comparaison des propositions reçues.
 - Confirmation d'une proposition et suivi de commande sur `/commandes/[id]`.
 - Paiement via Stripe Checkout, redirection hébergée et statut confirmé uniquement par webhook signé.
+- Centre de notifications intégré (inbox persistante, compteur de non-lues, lecture individuelle / globale) pour les confirmations, paiements, étapes de commande, remboursements et litiges.
 
 ### Professionnel
 - Inscription depuis un compte connecté.
@@ -67,6 +68,7 @@ Ouvrir `http://localhost:3000`.
 - Gestion des commandes acceptées : préparation, prêt au retrait ou départ en livraison, puis confirmation de remise.
 - Connexion du compte Stripe Express du commerçant et vérification des capacités de transfert / versement.
 - Le commerçant ne peut démarrer la préparation qu'après confirmation du paiement par webhook Stripe.
+- Centre de notifications intégré dans son espace professionnel.
 
 ### Opérateur
 - Console de revue des professionnels inscrits.
@@ -74,6 +76,7 @@ Ouvrir `http://localhost:3000`.
 - Compteurs de profils en attente et actifs.
 - Les routes d'administration exigent le rôle OPERATOR côté serveur.
 - Diffusion manuelle des demandes aux vendeurs actifs de la même ville dont les spécialités correspondent.
+- Notifications opérateur pour les remboursements et les litiges Stripe.
 - Les vendeurs ne reçoivent que le résumé anonymisé, la ville, le budget et les modalités, sans les coordonnées client ni la description brute.
 
 Pour attribuer le premier rôle opérateur, créer un compte par le parcours normal puis exécuter manuellement la procédure SQL documentée dans [docs/operations/operator-access.md](./docs/operations/operator-access.md). Aucun endpoint public ne permet l'auto-attribution du rôle opérateur.
@@ -133,3 +136,10 @@ Les fichiers ont été ajoutés via l'API GitHub. Les dépendances, Prisma Clien
 ## Console opérateur — paiements
 
 La console `/operateur` présente les 100 commandes les plus récentes, les paiements confirmés, remboursements et litiges Stripe. Les opérateurs peuvent déclencher un remboursement intégral depuis la fiche de commande après saisie d'un motif. Les événements de litige restent à traiter dans le Dashboard Stripe ; la console sert au suivi et n'envoie aucune preuve ni réponse automatiquement.
+
+
+## Notifications intégrées
+
+Le centre de notifications persistant est accessible depuis les espaces client, vendeur et opérateur. Les événements de confirmation de commande, paiement confirmé par webhook, changement de statut vendeur, remboursement et litige créent des notifications ciblées. Le compteur de non-lues est actualisé périodiquement et les utilisateurs peuvent marquer une notification ou toute leur inbox comme lue. Les notifications sont dédupliquées par utilisateur et événement.
+
+Ce lot fournit des notifications dans l’application uniquement. Aucun e-mail, SMS, notification push mobile ou service externe n’est envoyé ; ces canaux nécessitent un fournisseur, une configuration et les préférences / consentements appropriés.
