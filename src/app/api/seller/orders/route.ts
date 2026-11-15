@@ -34,9 +34,13 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Cette transition de statut n'est pas autorisée." }, { status: 409 });
     }
 
-    const updated = await prisma.order.update({
-      where: { id: order.id },
+    const changed = await prisma.order.updateMany({
+      where: { id: order.id, status: order.status },
       data: { status: input.status },
+    });
+    if (changed.count !== 1) return NextResponse.json({ error: "La commande a été modifiée entre-temps. Actualisez la page." }, { status: 409 });
+    const updated = await prisma.order.findUnique({
+      where: { id: order.id },
       select: { id: true, status: true, updatedAt: true },
     });
     return NextResponse.json({ order: updated });
