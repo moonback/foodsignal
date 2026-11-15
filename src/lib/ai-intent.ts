@@ -75,11 +75,11 @@ function getClarifications(output: z.infer<typeof modelOutputSchema>) {
   }
   output.items.forEach((item, index) => {
     if (item.quantity === null) {
-      missing.push(`items[\${index}].quantity`);
-      questions.push(`Quelle quantité souhaitez-vous pour « \${item.name} » (et dans quelle unité : kg, pièce, litre…) ?`);
+      missing.push("items[" + index + "].quantity");
+      questions.push("Quelle quantité souhaitez-vous pour « " + item.name + " » (et dans quelle unité : kg, pièce, litre…) ?");
     } else if (item.unit === null) {
-      missing.push(`items[\${index}].unit`);
-      questions.push(`Dans quelle unité souhaitez-vous « \${item.name} » (kg, pièce, litre…) ?`);
+      missing.push("items[" + index + "].unit");
+      questions.push("Dans quelle unité souhaitez-vous « " + item.name + " » (kg, pièce, litre…) ?");
     }
   });
   return {
@@ -96,7 +96,7 @@ export async function analyzeFoodIntent(description: string): Promise<AnalyzedIn
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
-      Authorization: `Bearer \${apiKey}`,
+      Authorization: "Bearer " + apiKey,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
