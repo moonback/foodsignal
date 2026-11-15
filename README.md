@@ -126,7 +126,7 @@ Consulter [ROADMAP.md](./ROADMAP.md) pour le détail des lots. Les objectifs com
 
 ## Vérification technique
 
-Les fichiers ont été ajoutés via l'API GitHub. Un script `npm test` et une suite de tests unitaires du matching (`tests/matching.test.cjs`) sont maintenant présents. Ils n'ont toutefois pas été exécutés dans cet environnement. Les dépendances, Prisma Client, migrations, lint, typecheck et build n'ont pas non plus été exécutés. Ne pas considérer le lot comme validé pour la production avant exécution locale de ces contrôles.
+Les fichiers ont été ajoutés via l'API GitHub. `npm test` lance les suites `tests/matching.test.cjs` et `tests/ai-intent.test.cjs`, couvrant le matching, les quantités fractionnaires, les preuves textuelles, les unités manquantes et les clarifications. Ces tests n'ont toutefois pas été exécutés dans cet environnement. Les dépendances, Prisma Client, migrations, lint, typecheck et build n'ont pas non plus été exécutés. Ne pas considérer le lot comme validé pour la production avant exécution locale de ces contrôles.
 
 
 ## Remboursements et litiges Stripe
