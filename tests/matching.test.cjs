@@ -168,3 +168,13 @@ test("accepte les quantités fractionnaires pour les unités au poids", () => {
   assert.equal(parsed.length, 1);
   assert.equal(estimateSellerBasket(stock, parsed), 450);
 });
+
+test("ne donne pas de points budget sans panier complet même si aucun budget n'est défini", () => {
+  const result = scoreSellerMatch(seller("seller-unpriced"), {
+    ...demand,
+    budgetMaxCents: null,
+    requestedItems: [],
+  });
+  assert.equal(result.estimatedBasketCents, null);
+  assert.equal(result.score, 85);
+});
