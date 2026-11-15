@@ -23,17 +23,10 @@ function anonymize(text: string) {
 export async function POST(request: Request) {
   try {
     const body = demandSchema.parse(await request.json());
-    const user = await prisma.user.upsert({
-      where: { email: body.customerEmail.toLowerCase() },
-      update: { name: body.customerName },
-      create: { email: body.customerEmail.toLowerCase(), name: body.customerName, passwordHash: "!pilot-invitation-required" },
-    });
-    if (user.role !== "CUSTOMER") {
-      return NextResponse.json({ error: "Ce compte ne peut pas créer de demande client." }, { status: 403 });
-    }
     const demand = await prisma.demand.create({
       data: {
-        customerId: user.id,
+        customerName: body.customerName,
+        customerEmail: body.customerEmail.toLowerCase(),
         rawDescription: body.description,
         anonymizedBrief: anonymize(body.description),
         city: body.city,
