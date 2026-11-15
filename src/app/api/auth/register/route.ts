@@ -7,7 +7,8 @@ import { createSession } from "@/lib/auth";
 const schema = z.object({
   name: z.string().trim().min(2).max(100),
   email: z.string().trim().email().max(254),
-  password: z.string().min(12, "Le mot de passe doit contenir au moins 12 caractères.").max(128),
+  password: z.string().min(12, "Le mot de passe doit contenir au moins 12 caractères.").max(128)
+    .refine((value) => Buffer.byteLength(value, "utf8") <= 72, "Le mot de passe ne doit pas dépasser 72 octets UTF-8."),
 });
 
 export async function POST(request: Request) {
