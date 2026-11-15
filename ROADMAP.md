@@ -40,13 +40,14 @@
 - [x] API catalogue protégée par rôle et propriété du vendeur.
 - [ ] Zone desservie, horaires et modalités de réception.
 - [x] Éligibilité stricte des vendeurs actifs dans la ville de la demande.
-- [x] Classement explicable : spécialités (50 points), catalogue disponible (35 points), indice budgétaire indicatif (15 points).
+- [x] Classement explicable : spécialités (50 points), catalogue disponible (35 points), coût du panier structuré (15 points ; aucun point budgétaire si le panier ne peut pas être calculé).
 - [x] Affichage opérateur des meilleurs scores et de leurs motifs avant diffusion.
 - [x] Diffusion explicite aux 10 meilleurs candidats au-dessus du seuil de 25/100.
 - [x] Boîte de réception vendeur limitée aux données anonymisées.
 - [x] Dépôt d'offres structurées avec calcul du montant côté serveur.
 - [x] Suite de tests unitaires du scoring et du classement ajoutée (`npm test`).
-- [ ] Exécuter la suite, auditer la couverture des mots-clés et calibrer sur des demandes réelles anonymisées.
+- [x] Tests unitaires ajoutés pour le calcul des paniers et les combinaisons multi-vendeurs (exécution locale encore requise).
+- [ ] Auditer la couverture des mots-clés et calibrer sur des demandes réelles anonymisées.
 
 ## Lot 3 — Compréhension et diffusion
 
@@ -61,9 +62,10 @@
 
 - [x] Soumission d'offres détaillées avec validation Zod et calcul serveur du sous-total.
 - [x] Espace particulier pour consulter ses demandes et comparer les propositions reçues.
+- [x] Contrôle de couverture des lignes structurées et de compatibilité des unités pour l'estimation du panier.
 - [ ] Contrôle de conformité avec les contraintes du client.
 - [ ] Comparaison prix / qualité déclarée / disponibilité / logistique.
-- [ ] Combinaison multi-vendeurs avec coût complet et frais.
+- [x] Première optimisation déterministe multi-vendeurs sur lignes structurées : couverture complète, quantités, unités compatibles et sous-total produits ; frais de préparation / livraison exclus de l'estimation.
 - [ ] Présentation transparente des compromis au client.
 
 ## Lot 5 — Commande et réception
